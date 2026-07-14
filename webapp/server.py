@@ -148,16 +148,16 @@ def create_app() -> FastAPI:
             return None
         return path if path.is_file() else None
 
-    @app.get("/", response_class=HTMLResponse)
-    async def index() -> FileResponse | HTMLResponse:
+    @app.get("/", response_model=None)
+    async def index():
         # Prefer docs/ chat (admin + same-domain API)
         for candidate in (DOCS_DIR / "index.html", STATIC_DIR / "index.html"):
             if candidate.is_file():
                 return FileResponse(candidate)
         return HTMLResponse("<h1>Missing docs/index.html</h1>", status_code=500)
 
-    @app.get("/landing.html", response_class=HTMLResponse)
-    async def landing() -> FileResponse | HTMLResponse:
+    @app.get("/landing.html", response_model=None)
+    async def landing():
         p = _docs_file("landing.html")
         if p:
             return FileResponse(p)
@@ -173,18 +173,18 @@ def create_app() -> FastAPI:
             "sameOrigin": True,
         }
 
-    @app.get("/chat.js")
-    async def chat_js() -> FileResponse | HTMLResponse:
+    @app.get("/chat.js", response_model=None)
+    async def chat_js():
         p = _docs_file("chat.js")
         return FileResponse(p, media_type="application/javascript") if p else HTMLResponse("x", status_code=404)
 
-    @app.get("/chat.css")
-    async def chat_css() -> FileResponse | HTMLResponse:
+    @app.get("/chat.css", response_model=None)
+    async def chat_css():
         p = _docs_file("chat.css")
         return FileResponse(p, media_type="text/css") if p else HTMLResponse("x", status_code=404)
 
-    @app.get("/styles.css")
-    async def styles_css() -> FileResponse | HTMLResponse:
+    @app.get("/styles.css", response_model=None)
+    async def styles_css():
         p = _docs_file("styles.css")
         return FileResponse(p, media_type="text/css") if p else HTMLResponse("x", status_code=404)
 
