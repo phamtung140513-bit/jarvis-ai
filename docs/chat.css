@@ -277,7 +277,7 @@ button, input, textarea, select {
 .msg.user .avatar { background: #5436da; }
 .msg.assistant .avatar {
   background: var(--accent);
-  background-image: url("assets/bot-avatar.jpg");
+  background-image: url("./assets/bot-avatar.jpg");
   background-size: cover;
   color: transparent;
 }
