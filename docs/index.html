@@ -18,7 +18,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="chat.css?v=4" />
+  <link rel="stylesheet" href="chat.css?v=5" />
 </head>
 <body>
   <div class="app" id="app">
@@ -62,14 +62,14 @@
         <div class="welcome" id="welcome">
           <img class="welcome-avatar" src="assets/bot-avatar.jpg" alt="Jarvis" />
           <h1>Jarvis AI</h1>
-          <p>Chat kieu ChatGPT — chay free tren GitHub Pages.<br />Can API key (Groq free / OpenRouter) trong <strong>Cai dat</strong>.</p>
+          <p>Senior coding assistant — viet / review / debug code.<br />Can API key (Groq free) trong <strong>Cai dat</strong>.</p>
           <div class="suggestions">
-            <button type="button" data-q="Giai thich Python async/await ngan gon, co vi du">Python async/await</button>
-            <button type="button" data-q="Viet API FastAPI hello world co CORS">FastAPI hello</button>
-            <button type="button" data-q="So sanh React va Vue cho nguoi moi">React vs Vue</button>
-            <button type="button" data-q="Lap plan hoc lap trinh 30 ngay">Plan hoc code</button>
+            <button type="button" data-q="Viet API FastAPI CRUD user (SQLAlchemy + Pydantic), co error handling va huong dan chay">FastAPI CRUD</button>
+            <button type="button" data-q="Review doan code Python nay ve bug, security, performance (toi se paste code)">Code review</button>
+            <button type="button" data-q="Giai thich traceback Python va dua patch toi thieu (toi se paste log)">Debug traceback</button>
+            <button type="button" data-q="Thiet ke kien truc bot Telegram SaaS multi-user + quota + SQLite">Kien truc bot</button>
           </div>
-          <p class="hint">Lan dau: bam Cai dat → dan GROQ_API_KEY (mien phi) → Luu</p>
+          <p class="hint">Lan dau: Cai dat → dan GROQ_API_KEY → Luu. AI mac dinh o che do CODER.</p>
         </div>
       </section>
 
@@ -157,6 +157,6 @@
     </form>
   </dialog>
 
-  <script src="chat.js?v=4"></script>
+  <script src="chat.js?v=5"></script>
 </body>
 </html>

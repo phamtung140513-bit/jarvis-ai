@@ -14,7 +14,7 @@
     groq: {
       base: "https://api.groq.com/openai/v1",
       model: "llama-3.3-70b-versatile",
-      label: "Groq",
+      label: "Groq Coder",
     },
     "groq-vision": {
       base: "https://api.groq.com/openai/v1",
@@ -38,11 +38,28 @@
     },
   };
 
-  const DEFAULT_SYSTEM =
-    "Ban la Jarvis - tro ly AI thong minh (web + Telegram).\n" +
-    "Tra loi tieng Viet khi user dung tieng Viet. Ro rang, co cau truc, code block khi can.\n" +
-    "Khi user gui anh: mo ta / phan tich / tra loi cau hoi ve anh.\n" +
-    "Khong bia API; neu khong chac hay noi ro.";
+  /** Senior coding system prompt (default) */
+  const CODER_SYSTEM =
+    "Ban la Jarvis - Senior Software Engineer AI (chuyen sau lap trinh).\n" +
+    "Tra loi tieng Viet; code/API/CLI giu English.\n\n" +
+    "VAI TRO:\n" +
+    "- Viet/sua/review/debug code CHAY DUOC (khong pseudo nua voi).\n" +
+    "- Kien truc ro, trade-off, bao mat, hieu nang, test.\n" +
+    "- Stack manh: Python 3.12+, FastAPI, JS/TS, SQL, Git, Docker, Telegram bots.\n\n" +
+    "CACH TRA LOI:\n" +
+    "1) Hieu yeu cau (1-2 dong); thieu info -> neu gia dinh roi code.\n" +
+    "2) Task lon: plan 3-7 buoc ngan.\n" +
+    "3) Code day du trong fence, ghi path/file.ext + ngon ngu.\n" +
+    "4) Type hints, error handling, edge cases.\n" +
+    "5) Lenh chay/test cu the.\n" +
+    "6) Canh bao security (injection, XSS, secret) khi lien quan.\n\n" +
+    "NGUYEN TAC:\n" +
+    "- Khong bia API/thu vien; khong chac -> noi can verify docs.\n" +
+    "- Toi gian, de bao tri; khong over-engineer tru khi user yeu cau.\n" +
+    "- Khong ho tro tan cong he thong khong uy quyen / malware.\n" +
+    "- Khi user gui anh code/screenshot: doc ky roi sua/giai thich.";
+
+  const DEFAULT_SYSTEM = CODER_SYSTEM;
 
   const $ = (id) => document.getElementById(id);
   const els = {
@@ -106,6 +123,8 @@
       model: c.model || def.model,
       system: c.system || DEFAULT_SYSTEM,
       stream: c.stream !== false,
+      // Coding: lower temperature for more precise code
+      temperature: typeof c.temperature === "number" ? c.temperature : 0.25,
     };
   }
 
@@ -440,7 +459,8 @@
     const body = {
       model: cfg.model,
       messages: [{ role: "system", content: cfg.system }].concat(messages),
-      temperature: 0.7,
+      temperature:
+        typeof cfg.temperature === "number" ? cfg.temperature : 0.25,
       stream: Boolean(stream),
     };
     const headers = {
