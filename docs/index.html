@@ -77,11 +77,18 @@
       </section>
 
       <div class="composer-wrap">
+        <div class="attach-preview" id="attachPreview" hidden></div>
         <form class="composer" id="form">
+          <input type="file" id="fileImage" accept="image/*" multiple hidden />
+          <button type="button" class="icon-btn attach-btn" id="btnAttach" title="Đính kèm ảnh" aria-label="Ảnh">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/>
+            </svg>
+          </button>
           <textarea
             id="input"
             rows="1"
-            placeholder="Nhắn tin cho Jarvis…"
+            placeholder="Nhắn tin hoặc gửi ảnh…"
             autocomplete="off"
             enterkeyhint="send"
           ></textarea>
@@ -91,7 +98,7 @@
             </svg>
           </button>
         </form>
-        <p class="disclaimer">Jarvis có thể sai. Kiểm tra thông tin quan trọng. Key API chỉ lưu trên trình duyệt của bạn.</p>
+        <p class="disclaimer">Hỗ trợ ảnh (model vision). Gợi ý Groq: <code>meta-llama/llama-4-scout-17b-16e-instruct</code>. Key chỉ lưu trình duyệt.</p>
       </div>
     </main>
   </div>
@@ -111,7 +118,8 @@
       <label>
         Provider preset
         <select id="cfgPreset">
-          <option value="groq">Groq (free tier) — khuyến nghị</option>
+          <option value="groq">Groq text (free)</option>
+          <option value="groq-vision">Groq vision (ảnh) — khuyến nghị khi gửi ảnh</option>
           <option value="openrouter">OpenRouter</option>
           <option value="xai">xAI Grok</option>
           <option value="custom">Custom / Jarvis backend</option>
