@@ -1,10 +1,10 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="vi">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Jarvis AI — Chat</title>
-  <meta name="description" content="Jarvis AI — chat web kiểu ChatGPT, host free trên GitHub Pages." />
+  <title>Jarvis AI â€” Chat</title>
+  <meta name="description" content="Jarvis AI â€” chat web kiá»ƒu ChatGPT, host free trÃªn GitHub Pages." />
   <meta name="theme-color" content="#212121" />
   <!-- Works on both /repo/ project Pages and root user/org Pages -->
   <script>
@@ -19,30 +19,30 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="chat.css" />
+  <link rel="stylesheet" href="chat.css?v=3" />
 </head>
 <body>
   <div class="app" id="app">
     <!-- Sidebar -->
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-top">
-        <button type="button" class="btn new-chat" id="btnNew" title="Chat mới">
-          <span class="ico">＋</span> Chat mới
+        <button type="button" class="btn new-chat" id="btnNew" title="Chat má»›i">
+          <span class="ico">ï¼‹</span> Chat má»›i
         </button>
-        <button type="button" class="icon-btn mobile-only" id="btnCloseSidebar" aria-label="Đóng">✕</button>
+        <button type="button" class="icon-btn mobile-only" id="btnCloseSidebar" aria-label="ÄÃ³ng">âœ•</button>
       </div>
 
-      <div class="history" id="history" aria-label="Lịch sử chat"></div>
+      <div class="history" id="history" aria-label="Lá»‹ch sá»­ chat"></div>
 
       <div class="sidebar-bottom">
-        <a class="side-link" href="landing.html">🏠 Trang giới thiệu</a>
-        <a class="side-link" href="https://t.me/grokapiai_bot" target="_blank" rel="noopener">✈️ Bot Telegram</a>
-        <button type="button" class="side-link as-btn" id="btnSettings">⚙️ Cài đặt API</button>
+        <a class="side-link" href="landing.html">ðŸ  Trang giá»›i thiá»‡u</a>
+        <a class="side-link" href="https://t.me/grokapiai_bot" target="_blank" rel="noopener">âœˆï¸ Bot Telegram</a>
+        <button type="button" class="side-link as-btn" id="btnSettings">âš™ï¸ CÃ i Ä‘áº·t API</button>
         <div class="user-chip">
           <img src="assets/bot-avatar.jpg" alt="" width="28" height="28" />
           <div>
             <div class="user-name">Jarvis AI</div>
-            <div class="user-sub" id="modelChip">chưa cấu hình</div>
+            <div class="user-sub" id="modelChip">chÆ°a cáº¥u hÃ¬nh</div>
           </div>
         </div>
       </div>
@@ -53,26 +53,26 @@
     <!-- Main -->
     <main class="main">
       <header class="topbar">
-        <button type="button" class="icon-btn mobile-only" id="btnOpenSidebar" aria-label="Menu">☰</button>
+        <button type="button" class="icon-btn mobile-only" id="btnOpenSidebar" aria-label="Menu">â˜°</button>
         <div class="topbar-title">
           <span id="chatTitle">Jarvis</span>
-          <span class="dot" id="statusDot" title="Trạng thái"></span>
+          <span class="dot" id="statusDot" title="Tráº¡ng thÃ¡i"></span>
         </div>
-        <button type="button" class="icon-btn" id="btnTopSettings" title="Cài đặt">⚙️</button>
+        <button type="button" class="icon-btn" id="btnTopSettings" title="CÃ i Ä‘áº·t">âš™ï¸</button>
       </header>
 
       <section class="messages" id="messages" aria-live="polite">
         <div class="welcome" id="welcome">
           <img class="welcome-avatar" src="assets/bot-avatar.jpg" alt="Jarvis" />
           <h1>Jarvis AI</h1>
-          <p>Chat kiểu ChatGPT — chạy free trên GitHub Pages.<br />Cần API key (Groq free / OpenRouter) trong <strong>Cài đặt</strong>.</p>
+          <p>Chat kiá»ƒu ChatGPT â€” cháº¡y free trÃªn GitHub Pages.<br />Cáº§n API key (Groq free / OpenRouter) trong <strong>CÃ i Ä‘áº·t</strong>.</p>
           <div class="suggestions">
-            <button type="button" data-q="Giải thích Python async/await ngắn gọn, có ví dụ">Python async/await</button>
-            <button type="button" data-q="Viết API FastAPI hello world có CORS">FastAPI hello</button>
-            <button type="button" data-q="So sánh React và Vue cho người mới">React vs Vue</button>
-            <button type="button" data-q="Lập plan học lập trình 30 ngày">Plan học code</button>
+            <button type="button" data-q="Giáº£i thÃ­ch Python async/await ngáº¯n gá»n, cÃ³ vÃ­ dá»¥">Python async/await</button>
+            <button type="button" data-q="Viáº¿t API FastAPI hello world cÃ³ CORS">FastAPI hello</button>
+            <button type="button" data-q="So sÃ¡nh React vÃ  Vue cho ngÆ°á»i má»›i">React vs Vue</button>
+            <button type="button" data-q="Láº­p plan há»c láº­p trÃ¬nh 30 ngÃ y">Plan há»c code</button>
           </div>
-          <p class="hint">Lần đầu: bấm ⚙️ → dán <code>GROQ_API_KEY</code> (miễn phí) → Lưu</p>
+          <p class="hint">Láº§n Ä‘áº§u: báº¥m âš™ï¸ â†’ dÃ¡n <code>GROQ_API_KEY</code> (miá»…n phÃ­) â†’ LÆ°u</p>
         </div>
       </section>
 
@@ -82,36 +82,26 @@
           <input type="file" id="fileImage" accept="image/*" multiple hidden />
 
           <div class="plus-wrap" id="plusWrap">
-            <button type="button" class="plus-btn" id="btnPlus" title="Thêm" aria-label="Thêm" aria-haspopup="true" aria-expanded="false">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
-                <path d="M12 5v14M5 12h14"/>
-              </svg>
+            <!-- Text + so icon always visible (SVG failed on some browsers) -->
+            <button type="button" class="plus-btn" id="btnPlus" title="áº¢nh tá»« mÃ¡y" aria-label="ThÃªm áº£nh tá»« mÃ¡y">
+              <span class="plus-glyph" aria-hidden="true">+</span>
             </button>
-            <div class="plus-menu" id="plusMenu" hidden role="menu">
-              <button type="button" class="plus-item" id="menuPickImage" role="menuitem">
-                <span class="pi-ico">🖼</span>
-                <span>
-                  <strong>Ảnh từ máy</strong>
-                  <small>Chọn ảnh trên thiết bị</small>
-                </span>
-              </button>
-            </div>
           </div>
 
           <textarea
             id="input"
             rows="1"
-            placeholder="Nhắn tin cho Jarvis…"
+            placeholder="Nháº¯n tin cho Jarvisâ€¦"
             autocomplete="off"
             enterkeyhint="send"
           ></textarea>
-          <button type="submit" id="btnSend" aria-label="Gửi" title="Gửi (Enter)">
+          <button type="submit" id="btnSend" aria-label="Gá»­i" title="Gá»­i (Enter)">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
               <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
             </svg>
           </button>
         </form>
-        <p class="disclaimer">Bấm <strong>+</strong> → Ảnh từ máy. Vision: preset <code>Groq vision</code>. Key chỉ lưu trình duyệt.</p>
+        <p class="disclaimer">Báº¥m <strong style="color:#fff">+</strong> Ä‘á»ƒ chá»n áº£nh tá»« mÃ¡y. Gá»­i áº£nh: preset <code>Groq vision</code>.</p>
       </div>
     </main>
   </div>
@@ -120,19 +110,19 @@
   <dialog class="modal" id="settingsModal">
     <form method="dialog" class="modal-card" id="settingsForm">
       <header>
-        <h2>Cài đặt API</h2>
-        <button type="submit" class="icon-btn" value="cancel" aria-label="Đóng">✕</button>
+        <h2>CÃ i Ä‘áº·t API</h2>
+        <button type="submit" class="icon-btn" value="cancel" aria-label="ÄÃ³ng">âœ•</button>
       </header>
       <p class="modal-note">
-        GitHub Pages chỉ host <strong>file tĩnh</strong>. Chat gọi API AI trực tiếp từ trình duyệt
-        (OpenAI-compatible). Key lưu <code>localStorage</code> — không gửi lên GitHub.
+        GitHub Pages chá»‰ host <strong>file tÄ©nh</strong>. Chat gá»i API AI trá»±c tiáº¿p tá»« trÃ¬nh duyá»‡t
+        (OpenAI-compatible). Key lÆ°u <code>localStorage</code> â€” khÃ´ng gá»­i lÃªn GitHub.
       </p>
 
       <label>
         Provider preset
         <select id="cfgPreset">
           <option value="groq">Groq text (free)</option>
-          <option value="groq-vision">Groq vision (ảnh) — khuyến nghị khi gửi ảnh</option>
+          <option value="groq-vision">Groq vision (áº£nh) â€” khuyáº¿n nghá»‹ khi gá»­i áº£nh</option>
           <option value="openrouter">OpenRouter</option>
           <option value="xai">xAI Grok</option>
           <option value="custom">Custom / Jarvis backend</option>
@@ -146,7 +136,7 @@
 
       <label>
         API Key
-        <input type="password" id="cfgKey" placeholder="gsk_… hoặc sk-…" autocomplete="off" />
+        <input type="password" id="cfgKey" placeholder="gsk_â€¦ hoáº·c sk-â€¦" autocomplete="off" />
       </label>
 
       <label>
@@ -155,23 +145,24 @@
       </label>
 
       <label>
-        System prompt (tuỳ chọn)
-        <textarea id="cfgSystem" rows="3" placeholder="Bạn là Jarvis…"></textarea>
+        System prompt (tuá»³ chá»n)
+        <textarea id="cfgSystem" rows="3" placeholder="Báº¡n lÃ  Jarvisâ€¦"></textarea>
       </label>
 
       <label class="check">
         <input type="checkbox" id="cfgStream" checked />
-        Stream trả lời (SSE)
+        Stream tráº£ lá»i (SSE)
       </label>
 
       <footer class="modal-actions">
-        <button type="button" class="btn ghost" id="btnTest">Test kết nối</button>
-        <button type="button" class="btn primary" id="btnSaveSettings">Lưu</button>
+        <button type="button" class="btn ghost" id="btnTest">Test káº¿t ná»‘i</button>
+        <button type="button" class="btn primary" id="btnSaveSettings">LÆ°u</button>
       </footer>
       <p class="test-out" id="testOut" hidden></p>
     </form>
   </dialog>
 
-  <script src="chat.js"></script>
+  <script src="chat.js?v=3"></script>
 </body>
 </html>
+
