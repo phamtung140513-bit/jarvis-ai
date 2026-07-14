@@ -1,9 +1,20 @@
-Trang admin RIENG (khong hien tren chat user):
+Trang ADMIN quan ly (khong link tren chat user):
 
-  http://127.0.0.1:7860/j-panel.html
+  Local (khuyen nghi, day du chuc nang):
+    http://127.0.0.1:7860/j-panel.html
 
-Key: WEB_ADMIN_KEY trong file .env
-(mac dinh da set: jarvis-admin-change-me — nen doi)
+  GitHub Pages (can server local dang chay o 7860):
+    https://phamtung140513-bit.github.io/jarvis-ai/j-panel.html
+
+Key: WEB_ADMIN_KEY trong .env
+  mac dinh: jarvis-admin-change-me  (nen doi)
+
+Chuc nang:
+  - Thong ke users / tin hom nay
+  - Tao ma kich hoat (/activate)
+  - Danh sach user, khoa user
+  - Gan goi trial/basic/pro/business
 
 Chat user:
   http://127.0.0.1:7860/
+  https://phamtung140513-bit.github.io/jarvis-ai/

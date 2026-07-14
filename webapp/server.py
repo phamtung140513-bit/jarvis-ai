@@ -35,6 +35,15 @@ if str(ROOT) not in sys.path:
 from ai.grok import GrokClient, GrokError  # noqa: E402
 from ai.prompts import SYSTEM_PROMPT  # noqa: E402
 from config import get_settings  # noqa: E402
+from database.sqlite import Database, set_db  # noqa: E402
+from product.access_codes import create_access_code  # noqa: E402
+from product.plans import PLANS, get_plan  # noqa: E402
+from product.users import (  # noqa: E402
+    deactivate_user,
+    list_users,
+    set_user_plan,
+    stats_summary,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -54,6 +63,22 @@ class ChatBody(BaseModel):
 
 class AdminLoginBody(BaseModel):
     key: str = Field(..., min_length=1, max_length=256)
+
+
+class GenCodeBody(BaseModel):
+    plan: str = Field(default="basic")
+    days: int | None = Field(default=None)
+    note: str = Field(default="web_admin")
+
+
+class SetPlanBody(BaseModel):
+    telegram_id: int
+    plan: str = Field(default="basic")
+    days: int | None = Field(default=None)
+
+
+class DelUserBody(BaseModel):
+    telegram_id: int
 
 
 class SessionMemory:
@@ -77,6 +102,7 @@ def create_app() -> FastAPI:
     settings = get_settings()
     memory = SessionMemory(settings.max_history_messages)
     grok = GrokClient(settings)
+    db = Database(settings)
 
     access_token = (settings.web_access_token or os.getenv("WEB_ACCESS_TOKEN") or "").strip()
     admin_key = (settings.web_admin_key or os.getenv("WEB_ADMIN_KEY") or "").strip()
@@ -86,13 +112,20 @@ def create_app() -> FastAPI:
     # Admin session tokens (in-memory; restart invalidates)
     admin_sessions: set[str] = set()
 
-    app = FastAPI(title=f"{settings.app_name} Web", version="1.1")
+    app = FastAPI(title=f"{settings.app_name} Web", version="1.2")
     app.state.settings = settings
     app.state.memory = memory
     app.state.grok = grok
+    app.state.db = db
     app.state.access_token = access_token
     app.state.admin_key = admin_key
     app.state.admin_sessions = admin_sessions
+
+    @app.on_event("startup")
+    async def _startup() -> None:
+        await db.init()
+        set_db(db)
+        logger.info("Web DB ready for admin management")
 
     app.add_middleware(
         CORSMiddleware,
@@ -253,6 +286,8 @@ def create_app() -> FastAPI:
         x_admin_token: str | None = Header(default=None, alias="X-Admin-Token"),
     ) -> dict[str, Any]:
         _check_admin(authorization, x_admin_token)
+        async with db.session() as session:
+            stats = await stats_summary(session)
         return {
             "ok": True,
             "app": settings.app_name,
@@ -260,8 +295,107 @@ def create_app() -> FastAPI:
             "model": settings.resolved_model,
             "base_url": settings.resolved_base_url,
             "user_auth_required": bool(access_token),
-            "sessions": len(memory._store),  # noqa: SLF001
+            "web_sessions": len(memory._store),  # noqa: SLF001
+            "stats": stats,
+            "plans": [
+                {
+                    "id": p.id,
+                    "name": p.name,
+                    "price_vnd": p.price_vnd,
+                    "days": p.days,
+                    "daily_messages": p.daily_messages,
+                }
+                for p in PLANS.values()
+                if p.id != "owner"
+            ],
         }
+
+    @app.get("/api/admin/users")
+    async def admin_users(
+        authorization: str | None = Header(default=None),
+        x_admin_token: str | None = Header(default=None, alias="X-Admin-Token"),
+        limit: int = 50,
+    ) -> dict[str, Any]:
+        _check_admin(authorization, x_admin_token)
+        async with db.session() as session:
+            rows = await list_users(session, min(max(limit, 1), 100))
+        users = []
+        for u in rows:
+            users.append(
+                {
+                    "telegram_id": u.telegram_id,
+                    "username": u.username,
+                    "full_name": u.full_name,
+                    "plan_id": u.plan_id,
+                    "active": u.active,
+                    "is_admin": u.is_admin,
+                    "expires_at": u.expires_at.isoformat() if u.expires_at else None,
+                    "created_at": u.created_at.isoformat() if u.created_at else None,
+                }
+            )
+        return {"ok": True, "users": users}
+
+    @app.post("/api/admin/gencode")
+    async def admin_gencode(
+        body: GenCodeBody,
+        authorization: str | None = Header(default=None),
+        x_admin_token: str | None = Header(default=None, alias="X-Admin-Token"),
+    ) -> dict[str, Any]:
+        _check_admin(authorization, x_admin_token)
+        plan_id = (body.plan or "basic").lower().strip()
+        if plan_id not in PLANS or plan_id == "owner":
+            raise HTTPException(400, "Plan khong hop le")
+        async with db.session() as session:
+            code = await create_access_code(
+                session,
+                plan_id=plan_id,
+                days=body.days,
+                note=body.note or "web_admin",
+                created_by=None,
+            )
+        plan = get_plan(plan_id)
+        return {
+            "ok": True,
+            "code": code.code,
+            "plan": plan.id,
+            "plan_name": plan.name,
+            "days": code.days,
+            "max_uses": code.max_uses,
+            "activate": f"/activate {code.code}",
+        }
+
+    @app.post("/api/admin/setplan")
+    async def admin_setplan(
+        body: SetPlanBody,
+        authorization: str | None = Header(default=None),
+        x_admin_token: str | None = Header(default=None, alias="X-Admin-Token"),
+    ) -> dict[str, Any]:
+        _check_admin(authorization, x_admin_token)
+        plan_id = (body.plan or "basic").lower().strip()
+        if plan_id not in PLANS:
+            raise HTTPException(400, "Plan khong hop le")
+        async with db.session() as session:
+            user = await set_user_plan(
+                session, body.telegram_id, plan_id, body.days
+            )
+        return {
+            "ok": True,
+            "telegram_id": user.telegram_id,
+            "plan_id": user.plan_id,
+            "active": user.active,
+            "expires_at": user.expires_at.isoformat() if user.expires_at else None,
+        }
+
+    @app.post("/api/admin/deluser")
+    async def admin_deluser(
+        body: DelUserBody,
+        authorization: str | None = Header(default=None),
+        x_admin_token: str | None = Header(default=None, alias="X-Admin-Token"),
+    ) -> dict[str, Any]:
+        _check_admin(authorization, x_admin_token)
+        async with db.session() as session:
+            ok = await deactivate_user(session, body.telegram_id)
+        return {"ok": ok, "telegram_id": body.telegram_id}
 
     @app.post("/api/chat")
     async def chat(

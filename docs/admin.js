@@ -1,92 +1,168 @@
 /**
- * Secret admin page only — not linked from user chat.
+ * Jarvis Admin management console (secret page /j-panel.html).
+ * Works on same-origin server or GitHub Pages (API -> 127.0.0.1:7860).
  */
 (() => {
   const LS_API = "jarvis_api_base_v2";
-  const LS_USER = "jarvis_user_token_v2";
   const LS_ADMIN = "jarvis_admin_token_v2";
 
   const $ = (id) => document.getElementById(id);
 
   function apiBase() {
+    const loginField = ($("apiBaseLogin") && $("apiBaseLogin").value.trim()) || "";
+    if (loginField) return loginField.replace(/\/$/, "");
     const ls = (localStorage.getItem(LS_API) || "").trim().replace(/\/$/, "");
     if (ls) return ls;
-    if (location.hostname.toLowerCase().indexOf("github.io") !== -1) {
-      return "http://127.0.0.1:7860";
-    }
-    return (location.origin || "").replace(/\/$/, "");
+    const host = (location.hostname || "").toLowerCase();
+    // GitHub Pages static -> local API
+    if (host.indexOf("github.io") !== -1) return "http://127.0.0.1:7860";
+    return (location.origin || "http://127.0.0.1:7860").replace(/\/$/, "");
   }
 
-  function show(el, on) {
-    el.classList.toggle("hidden", !on);
+  function token() {
+    return localStorage.getItem(LS_ADMIN) || "";
   }
 
-  function msg(el, text, ok) {
+  function headers() {
+    return {
+      "Content-Type": "application/json",
+      "X-Admin-Token": token(),
+    };
+  }
+
+  function showMsg(el, text, ok) {
     el.classList.remove("hidden");
     el.textContent = text;
-    el.style.color = ok === true ? "#34d399" : ok === false ? "#fca5a5" : "#cfcfcf";
-  }
-
-  function showDash() {
-    show($("gate"), false);
-    show($("dash"), true);
-    $("apiBase").value = localStorage.getItem(LS_API) || "";
-    $("userToken").value = localStorage.getItem(LS_USER) || "";
-    $("chatLink").href = (localStorage.getItem(LS_API) || location.origin || "").replace(/\/$/, "") + "/";
-    refreshStatus();
+    el.className = "msg " + (ok === true ? "ok" : ok === false ? "err" : "");
   }
 
   function showGate() {
-    show($("dash"), false);
-    show($("gate"), true);
+    $("gate").classList.remove("hidden");
+    $("dash").classList.add("hidden");
   }
 
-  async function refreshStatus() {
-    const box = $("dashMsg");
-    box.textContent = "Loading...";
+  function showDash() {
+    $("gate").classList.add("hidden");
+    $("dash").classList.remove("hidden");
+    $("chatLink").href = apiBase() + "/";
+    refreshAll();
+  }
+
+  async function api(path, opts) {
+    const r = await fetch(apiBase() + path, opts);
+    const text = await r.text();
+    let data;
     try {
-      const base = apiBase();
-      const r = await fetch(base + "/api/admin/status", {
-        headers: { "X-Admin-Token": localStorage.getItem(LS_ADMIN) || "" },
+      data = JSON.parse(text);
+    } catch {
+      data = { detail: text };
+    }
+    if (!r.ok) throw new Error(data.detail || text || "HTTP " + r.status);
+    return data;
+  }
+
+  async function refreshAll() {
+    try {
+      const st = await api("/api/admin/status", { headers: headers(), cache: "no-store" });
+      $("sUsers").textContent = st.stats ? st.stats.users : "-";
+      $("sActive").textContent = st.stats ? st.stats.active : "-";
+      $("sMsg").textContent = st.stats ? st.stats.messages_today : "-";
+      $("serverInfo").textContent =
+        "provider=" +
+        st.provider +
+        " | model=" +
+        st.model +
+        " | web_sessions=" +
+        (st.web_sessions || 0);
+      $("dashSub").textContent = st.app + " · quan ly user / ma kich hoat";
+
+      const us = await api("/api/admin/users?limit=50", {
+        headers: headers(),
         cache: "no-store",
       });
-      if (!r.ok) throw new Error(await r.text());
-      const j = await r.json();
-      msg(
-        box,
-        "OK\nprovider: " + j.provider + "\nmodel: " + j.model + "\nuser_auth: " + j.user_auth_required,
-        true
-      );
+      const body = $("usersBody");
+      body.innerHTML = "";
+      (us.users || []).forEach((u) => {
+        const tr = document.createElement("tr");
+        const un = u.username ? "@" + u.username : u.full_name || "-";
+        const exp = u.expires_at ? u.expires_at.slice(0, 10) : "∞";
+        tr.innerHTML =
+          "<td><code>" +
+          u.telegram_id +
+          "</code></td>" +
+          "<td>" +
+          un +
+          "</td>" +
+          "<td>" +
+          u.plan_id +
+          "</td>" +
+          "<td>" +
+          (u.active ? "ON" : "OFF") +
+          "</td>" +
+          "<td>" +
+          exp +
+          "</td>" +
+          '<td><button type="button" class="btn danger btn-sm" data-del="' +
+          u.telegram_id +
+          '">Khoa</button></td>';
+        body.appendChild(tr);
+      });
+      body.querySelectorAll("[data-del]").forEach((btn) => {
+        btn.onclick = async () => {
+          const tid = Number(btn.getAttribute("data-del"));
+          if (!confirm("Khoa user " + tid + "?")) return;
+          try {
+            await api("/api/admin/deluser", {
+              method: "POST",
+              headers: headers(),
+              body: JSON.stringify({ telegram_id: tid }),
+            });
+            showMsg($("dashMsg"), "Da khoa " + tid, true);
+            refreshAll();
+          } catch (e) {
+            showMsg($("dashMsg"), String(e.message || e), false);
+          }
+        };
+      });
     } catch (e) {
-      msg(box, "Loi: " + (e.message || e), false);
+      showMsg($("dashMsg"), String(e.message || e), false);
+      if (String(e.message || "").indexOf("401") !== -1 || String(e.message || "").toLowerCase().indexOf("sai") !== -1) {
+        localStorage.removeItem(LS_ADMIN);
+        showGate();
+      }
     }
   }
 
-  // Auto enter if already logged in
-  if (localStorage.getItem(LS_ADMIN)) {
-    showDash();
-  }
+  // Tabs
+  document.querySelectorAll(".tab").forEach((tab) => {
+    tab.onclick = () => {
+      document.querySelectorAll(".tab").forEach((t) => t.classList.remove("on"));
+      tab.classList.add("on");
+      const name = tab.getAttribute("data-tab");
+      document.querySelectorAll(".tabpane").forEach((p) => p.classList.add("hidden"));
+      $("pane-" + name).classList.remove("hidden");
+    };
+  });
 
   $("btnLogin").onclick = async () => {
     const key = ($("key").value || "").trim();
-    const out = $("gateMsg");
-    msg(out, "Checking...", null);
+    const baseInput = ($("apiBaseLogin").value || "").trim().replace(/\/$/, "");
+    if (baseInput) localStorage.setItem(LS_API, baseInput);
+    showMsg($("gateMsg"), "Dang nhap...", null);
     try {
-      const base = apiBase();
-      const r = await fetch(base + "/api/admin/login", {
+      const data = await api("/api/admin/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ key: key }),
       });
-      if (!r.ok) throw new Error(await r.text());
-      const j = await r.json();
-      localStorage.setItem(LS_ADMIN, j.admin_token || key);
+      localStorage.setItem(LS_ADMIN, data.admin_token || key);
+      showMsg($("gateMsg"), "OK", true);
       showDash();
     } catch (e) {
-      msg(
-        out,
+      showMsg(
+        $("gateMsg"),
         String(e.message || e) +
-          "\nDam bao server chay: python -m webapp.server\nWEB_ADMIN_KEY dung trong .env",
+          "\n\nDam bao:\n- Server: python -m webapp.server\n- API: http://127.0.0.1:7860\n- WEB_ADMIN_KEY dung",
         false
       );
     }
@@ -99,22 +175,89 @@
     }
   });
 
-  $("btnSave").onclick = () => {
-    const base = ($("apiBase").value || "").trim().replace(/\/$/, "");
-    if (base) localStorage.setItem(LS_API, base);
-    else localStorage.removeItem(LS_API);
-    const ut = ($("userToken").value || "").trim();
-    if (ut) localStorage.setItem(LS_USER, ut);
-    else localStorage.removeItem(LS_USER);
-    $("chatLink").href = apiBase() + "/";
-    msg($("dashMsg"), "Da luu (chi may nay).", true);
-  };
-
-  $("btnTest").onclick = () => refreshStatus();
-
   $("btnLogout").onclick = () => {
     localStorage.removeItem(LS_ADMIN);
     $("key").value = "";
     showGate();
   };
+
+  $("btnRefresh").onclick = () => refreshAll();
+
+  $("btnGenCode").onclick = async () => {
+    try {
+      const daysRaw = ($("codeDays").value || "").trim();
+      const body = {
+        plan: $("codePlan").value,
+        note: ($("codeNote").value || "web_admin").trim(),
+      };
+      if (daysRaw) body.days = Number(daysRaw);
+      const data = await api("/api/admin/gencode", {
+        method: "POST",
+        headers: headers(),
+        body: JSON.stringify(body),
+      });
+      const box = $("codeResult");
+      box.classList.remove("hidden");
+      box.textContent =
+        "MA: " +
+        data.code +
+        "\nGoi: " +
+        data.plan_name +
+        " (" +
+        data.days +
+        " ngay)\nKhach go:\n/activate " +
+        data.code;
+      showMsg($("dashMsg"), "Da tao ma " + data.code, true);
+    } catch (e) {
+      showMsg($("dashMsg"), String(e.message || e), false);
+    }
+  };
+
+  $("btnSetPlan").onclick = async () => {
+    try {
+      const tid = Number($("planTg").value);
+      if (!tid) throw new Error("Nhap telegram_id");
+      const daysRaw = ($("planDays").value || "").trim();
+      const body = { telegram_id: tid, plan: $("planId").value };
+      if (daysRaw) body.days = Number(daysRaw);
+      const data = await api("/api/admin/setplan", {
+        method: "POST",
+        headers: headers(),
+        body: JSON.stringify(body),
+      });
+      showMsg(
+        $("dashMsg"),
+        "OK user " + data.telegram_id + " -> " + data.plan_id,
+        true
+      );
+      refreshAll();
+    } catch (e) {
+      showMsg($("dashMsg"), String(e.message || e), false);
+    }
+  };
+
+  $("btnDelUser").onclick = async () => {
+    try {
+      const tid = Number($("planTg").value);
+      if (!tid) throw new Error("Nhap telegram_id");
+      if (!confirm("Khoa user " + tid + "?")) return;
+      await api("/api/admin/deluser", {
+        method: "POST",
+        headers: headers(),
+        body: JSON.stringify({ telegram_id: tid }),
+      });
+      showMsg($("dashMsg"), "Da khoa " + tid, true);
+      refreshAll();
+    } catch (e) {
+      showMsg($("dashMsg"), String(e.message || e), false);
+    }
+  };
+
+  // Prefill API base for GitHub Pages
+  if (location.hostname.toLowerCase().indexOf("github.io") !== -1) {
+    $("apiBaseLogin").value = localStorage.getItem(LS_API) || "http://127.0.0.1:7860";
+  }
+
+  if (token()) showDash();
+  else showGate();
 })();
