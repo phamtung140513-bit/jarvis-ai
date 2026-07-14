@@ -1,6 +1,7 @@
 /**
- * Jarvis Chat — static ChatGPT-style UI for GitHub Pages.
+ * Jarvis Chat - static ChatGPT-style UI for GitHub Pages.
  * Supports text + images (OpenAI-compatible vision models).
+ * UI strings use plain ASCII Vietnamese to avoid encoding issues.
  */
 (() => {
   const STORAGE_CFG = "jarvis_pages_cfg_v1";
@@ -37,10 +38,11 @@
     },
   };
 
-  const DEFAULT_SYSTEM = `Bạn là Jarvis — trợ lý AI thông minh (web tĩnh + Telegram bot cùng thương hiệu).
-Trả lời tiếng Việt khi user dùng tiếng Việt. Rõ ràng, có cấu trúc, code block khi cần.
-Khi user gửi ảnh: mô tả / phân tích / trả lời câu hỏi về ảnh một cách hữu ích.
-Không bịa API; nếu không chắc hãy nói rõ.`;
+  const DEFAULT_SYSTEM =
+    "Ban la Jarvis - tro ly AI thong minh (web + Telegram).\n" +
+    "Tra loi tieng Viet khi user dung tieng Viet. Ro rang, co cau truc, code block khi can.\n" +
+    "Khi user gui anh: mo ta / phan tich / tra loi cau hoi ve anh.\n" +
+    "Khong bia API; neu khong chac hay noi ro.";
 
   const $ = (id) => document.getElementById(id);
   const els = {
@@ -75,11 +77,8 @@ Không bịa API; nếu không chắc hãy nói rõ.`;
     testOut: $("testOut"),
   };
 
-  /** Pending images as data URLs */
   let pendingImages = [];
-  /** @type {{id:string,title:string,messages:any[],updated:number}[]} */
   let chats = [];
-  /** @type {string|null} */
   let activeId = null;
   let busy = false;
 
@@ -120,11 +119,9 @@ Không bịa API; nếu không chắc hãy nói rõ.`;
   }
 
   function persistChats() {
-    // Cap total storage: strip old images from very old chats if needed
     try {
       localStorage.setItem(STORAGE_CHATS, JSON.stringify(chats));
     } catch {
-      // Quota exceeded — drop images from oldest messages
       for (const c of [...chats].sort((a, b) => a.updated - b.updated)) {
         for (const m of c.messages) {
           if (m.images && m.images.length) m.images = [];
@@ -145,7 +142,7 @@ Không bịa API; nếu không chắc hãy nói rõ.`;
 
   function refreshModelChip() {
     const c = getCfg();
-    els.modelChip.textContent = c.key ? `${c.model}` : "chưa có API key";
+    els.modelChip.textContent = c.key ? String(c.model) : "chua co API key";
     els.statusDot.classList.toggle("ok", Boolean(c.key));
     els.statusDot.classList.toggle("err", !c.key);
   }
@@ -160,8 +157,9 @@ Không bịa API; nếu không chắc hãy nói rõ.`;
     for (const c of sorted) {
       const row = document.createElement("div");
       row.className = "hist-item" + (c.id === activeId ? " active" : "");
-      row.innerHTML = `<span class="title"></span><button type="button" class="del" title="Xóa">✕</button>`;
-      row.querySelector(".title").textContent = c.title || "Chat mới";
+      row.innerHTML =
+        '<span class="title"></span><button type="button" class="del" title="Xoa">X</button>';
+      row.querySelector(".title").textContent = c.title || "Chat moi";
       row.addEventListener("click", (e) => {
         if (e.target.closest(".del")) return;
         selectChat(c.id);
@@ -185,14 +183,20 @@ Không bịa API; nếu không chắc hãy nói rõ.`;
     if (!text) return "";
     let s = escapeHtml(text);
     s = s.replace(/```(\w+)?\n([\s\S]*?)```/g, (_, lang, code) => {
-      return `<pre><code class="lang-${lang || "txt"}">${code.replace(/\n$/, "")}</code></pre>`;
+      return (
+        '<pre><code class="lang-' +
+        (lang || "txt") +
+        '">' +
+        code.replace(/\n$/, "") +
+        "</code></pre>"
+      );
     });
     s = s.replace(/`([^`]+)`/g, "<code>$1</code>");
     s = s.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
     s = s.replace(/(^|\n)[*-] (.+)/g, "$1• $2");
     s = s
       .split(/\n{2,}/)
-      .map((p) => `<p>${p.replace(/\n/g, "<br>")}</p>`)
+      .map((p) => "<p>" + p.replace(/\n/g, "<br>") + "</p>")
       .join("");
     return s;
   }
@@ -214,12 +218,14 @@ Không bịa API; nếu không chắc hãy nói rõ.`;
     scrollBottom();
   }
 
-  function appendMsg(role, content, images = [], scroll = true) {
+  function appendMsg(role, content, images, scroll) {
+    if (images === undefined) images = [];
+    if (scroll === undefined) scroll = true;
     if (els.welcome && els.welcome.parentElement) {
       els.welcome.remove();
     }
     const row = document.createElement("div");
-    row.className = `msg ${role}`;
+    row.className = "msg " + role;
     const av = document.createElement("div");
     av.className = "avatar";
     av.textContent = role === "user" ? "U" : "J";
@@ -227,7 +233,7 @@ Không bịa API; nếu không chắc hãy nói rõ.`;
     body.className = "body";
     const roleEl = document.createElement("div");
     roleEl.className = "role";
-    roleEl.textContent = role === "user" ? "Bạn" : "Jarvis";
+    roleEl.textContent = role === "user" ? "Ban" : "Jarvis";
     body.appendChild(roleEl);
 
     if (images && images.length) {
@@ -236,7 +242,7 @@ Không bịa API; nếu không chắc hãy nói rõ.`;
       for (const src of images) {
         const img = document.createElement("img");
         img.src = src;
-        img.alt = "Ảnh đính kèm";
+        img.alt = "Anh";
         img.addEventListener("click", () => window.open(src, "_blank"));
         wrap.appendChild(img);
       }
@@ -246,7 +252,7 @@ Không bịa API; nếu không chắc hãy nói rõ.`;
     const contentEl = document.createElement("div");
     contentEl.className = "content";
     if (role === "assistant") contentEl.innerHTML = formatMarkdown(content || "");
-    else contentEl.textContent = content || (images?.length ? "" : "");
+    else contentEl.textContent = content || "";
     body.appendChild(contentEl);
     row.appendChild(av);
     row.appendChild(body);
@@ -262,7 +268,7 @@ Không bịa API; nếu không chắc hãy nói rõ.`;
   function newChat() {
     const c = {
       id: uid(),
-      title: "Chat mới",
+      title: "Chat moi",
       messages: [],
       updated: Date.now(),
     };
@@ -286,7 +292,7 @@ Không bịa API; nếu không chắc hãy nói rõ.`;
 
   function deleteChat(id) {
     chats = chats.filter((c) => c.id !== id);
-    if (activeId === id) activeId = chats[0]?.id || null;
+    if (activeId === id) activeId = chats[0] ? chats[0].id : null;
     persistChats();
     renderHistory();
     renderMessages();
@@ -302,17 +308,6 @@ Không bịa API; nếu không chắc hãy nói rõ.`;
     els.send.disabled = v;
     els.input.disabled = v;
     if (els.btnPlus) els.btnPlus.disabled = v;
-  }
-
-  /** Open OS file picker for images */
-  function pickImageFromDevice() {
-    const input = els.fileImage || document.getElementById("fileImage");
-    if (!input) {
-      alert("Không tìm thấy ô chọn ảnh. Thử Ctrl+F5 tải lại trang.");
-      return;
-    }
-    input.value = "";
-    input.click();
   }
 
   function clearPendingImages() {
@@ -332,7 +327,8 @@ Không bịa API; nếu không chắc hãy nói rõ.`;
     pendingImages.forEach((src, i) => {
       const chip = document.createElement("div");
       chip.className = "attach-chip";
-      chip.innerHTML = `<img alt="preview" /><button type="button" class="rm" title="Gỡ">✕</button>`;
+      chip.innerHTML =
+        '<img alt="preview" /><button type="button" class="rm" title="Go">X</button>';
       chip.querySelector("img").src = src;
       chip.querySelector(".rm").addEventListener("click", () => {
         pendingImages.splice(i, 1);
@@ -346,7 +342,7 @@ Không bịa API; nếu không chắc hãy nói rõ.`;
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => resolve(reader.result);
-      reader.onerror = () => reject(new Error("Không đọc được file ảnh"));
+      reader.onerror = () => reject(new Error("Khong doc duoc file anh"));
       reader.readAsDataURL(file);
     });
   }
@@ -355,7 +351,8 @@ Không bịa API; nếu không chắc hãy nói rõ.`;
     return new Promise((resolve) => {
       const img = new Image();
       img.onload = () => {
-        let { width, height } = img;
+        let width = img.width;
+        let height = img.height;
         const max = MAX_EDGE;
         if (width > max || height > max) {
           const r = Math.min(max / width, max / height);
@@ -375,11 +372,13 @@ Không bịa API; nếu không chắc hãy nói rõ.`;
   }
 
   async function addFiles(fileList) {
-    const files = [...fileList].filter((f) => f.type.startsWith("image/"));
-    for (const f of files) {
+    const files = Array.prototype.slice
+      .call(fileList)
+      .filter((f) => f.type.indexOf("image/") === 0);
+    for (let i = 0; i < files.length; i++) {
       if (pendingImages.length >= MAX_IMAGES) break;
       try {
-        let data = await fileToDataUrl(f);
+        let data = await fileToDataUrl(files[i]);
         data = await compressImage(data);
         pendingImages.push(data);
       } catch (e) {
@@ -408,7 +407,6 @@ Không bịa API; nếu không chắc hãy nói rõ.`;
     els.cfgModel.value = p.model;
   }
 
-  /** Convert stored messages → API payload (multimodal when images). */
   function toApiMessages(messages) {
     return messages.map((m) => {
       if (m.role === "assistant") {
@@ -419,47 +417,49 @@ Không bịa API; nếu không chắc hãy nói rõ.`;
         return { role: "user", content: m.content || "" };
       }
       const parts = [];
-      const text = (m.content || "").trim() || "Hãy xem ảnh và phân tích / trả lời.";
-      parts.push({ type: "text", text });
-      for (const url of imgs) {
+      const text =
+        (m.content || "").trim() || "Hay xem anh va phan tich / tra loi.";
+      parts.push({ type: "text", text: text });
+      for (let i = 0; i < imgs.length; i++) {
         parts.push({
           type: "image_url",
-          image_url: { url },
+          image_url: { url: imgs[i] },
         });
       }
       return { role: "user", content: parts };
     });
   }
 
-  async function chatCompletion(messages, { stream }) {
+  async function chatCompletion(messages, opts) {
+    const stream = opts && opts.stream;
     const cfg = getCfg();
     if (!cfg.key) {
-      throw new Error("Chưa có API key. Mở Cài đặt (⚙️) và dán key Groq/OpenRouter.");
+      throw new Error("Chua co API key. Mo Cai dat va dan key Groq/OpenRouter.");
     }
-    const url = `${cfg.base}/chat/completions`;
+    const url = cfg.base + "/chat/completions";
     const body = {
       model: cfg.model,
-      messages: [{ role: "system", content: cfg.system }, ...messages],
+      messages: [{ role: "system", content: cfg.system }].concat(messages),
       temperature: 0.7,
       stream: Boolean(stream),
     };
     const headers = {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${cfg.key}`,
+      Authorization: "Bearer " + cfg.key,
     };
-    if (cfg.base.includes("openrouter")) {
+    if (cfg.base.indexOf("openrouter") !== -1) {
       headers["HTTP-Referer"] = location.origin;
       headers["X-Title"] = "Jarvis AI Pages";
     }
 
     const res = await fetch(url, {
       method: "POST",
-      headers,
+      headers: headers,
       body: JSON.stringify(body),
     });
     if (!res.ok) {
       const t = await res.text();
-      throw new Error(`API ${res.status}: ${t.slice(0, 320)}`);
+      throw new Error("API " + res.status + ": " + t.slice(0, 320));
     }
     return res;
   }
@@ -470,24 +470,28 @@ Không bịa API; nếu không chắc hãy nói rõ.`;
     let buf = "";
     let full = "";
     while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      buf += decoder.decode(value, { stream: true });
+      const chunk = await reader.read();
+      if (chunk.done) break;
+      buf += decoder.decode(chunk.value, { stream: true });
       const lines = buf.split("\n");
       buf = lines.pop() || "";
-      for (const line of lines) {
-        const s = line.trim();
-        if (!s.startsWith("data:")) continue;
+      for (let i = 0; i < lines.length; i++) {
+        const s = lines[i].trim();
+        if (s.indexOf("data:") !== 0) continue;
         const data = s.slice(5).trim();
         if (data === "[DONE]") continue;
         try {
           const json = JSON.parse(data);
-          const delta = json.choices?.[0]?.delta?.content;
+          const delta =
+            json.choices &&
+            json.choices[0] &&
+            json.choices[0].delta &&
+            json.choices[0].delta.content;
           if (delta) {
             full += delta;
             onDelta(full);
           }
-        } catch {
+        } catch (e) {
           /* ignore */
         }
       }
@@ -497,7 +501,7 @@ Không bịa API; nếu không chắc hãy nói rõ.`;
 
   async function sendMessage(text) {
     text = (text || "").trim();
-    const images = [...pendingImages];
+    const images = pendingImages.slice();
     if ((!text && !images.length) || busy) return;
 
     const cfg = getCfg();
@@ -505,16 +509,15 @@ Không bịa API; nếu không chắc hãy nói rõ.`;
       openSettings();
       els.testOut.hidden = false;
       els.testOut.className = "test-out err";
-      els.testOut.textContent = "Cần API key trước khi chat.";
+      els.testOut.textContent = "Can API key truoc khi chat.";
       return;
     }
 
-    // Hint if image + non-vision model
     if (images.length && /llama-3\.3-70b|versatile|deepseek-chat/i.test(cfg.model)) {
       const ok = confirm(
-        "Model hiện tại có thể không hỗ trợ ảnh.\n\n" +
-          "Nên chọn preset «Groq vision» trong ⚙️ (model llama-4-scout).\n\n" +
-          "Vẫn gửi tiếp?"
+        "Model hien tai co the khong ho tro anh.\n\n" +
+          "Nen chon preset Groq vision trong Cai dat.\n\n" +
+          "Van gui tiep?"
       );
       if (!ok) {
         openSettings();
@@ -523,11 +526,10 @@ Không bịa API; nếu không chắc hãy nói rõ.`;
     }
 
     const chat = ensureChat();
-    const userMsg = { role: "user", content: text, images };
-    chat.messages.push(userMsg);
-    if (chat.title === "Chat mới") {
-      const t = text || "Ảnh đính kèm";
-      chat.title = t.slice(0, 40) + (t.length > 40 ? "…" : "");
+    chat.messages.push({ role: "user", content: text, images: images });
+    if (chat.title === "Chat moi") {
+      const t = text || "Anh dinh kem";
+      chat.title = t.slice(0, 40) + (t.length > 40 ? "..." : "");
     }
     chat.updated = Date.now();
     persistChats();
@@ -552,15 +554,21 @@ Không bịa API; nếu không chắc hãy nói rõ.`;
           scrollBottom();
         });
         contentEl.parentElement.parentElement.classList.remove("typing");
-        if (!full) throw new Error("API trả về rỗng (CORS / model / vision).");
+        if (!full) throw new Error("API tra ve rong (CORS / model / vision).");
         contentEl.innerHTML = formatMarkdown(full);
         chat.messages.push({ role: "assistant", content: full });
       } else {
         const res = await chatCompletion(apiMessages, { stream: false });
         const data = await res.json();
-        const full = data.choices?.[0]?.message?.content?.trim() || "";
+        const full =
+          (data.choices &&
+            data.choices[0] &&
+            data.choices[0].message &&
+            data.choices[0].message.content &&
+            data.choices[0].message.content.trim()) ||
+          "";
         contentEl.parentElement.parentElement.classList.remove("typing");
-        if (!full) throw new Error("API trả về rỗng.");
+        if (!full) throw new Error("API tra ve rong.");
         contentEl.innerHTML = formatMarkdown(full);
         chat.messages.push({ role: "assistant", content: full });
       }
@@ -571,14 +579,16 @@ Không bịa API; nếu không chắc hãy nói rõ.`;
       els.statusDot.classList.remove("err");
     } catch (err) {
       contentEl.parentElement.parentElement.classList.remove("typing");
-      const msg = err?.message || String(err);
+      const msg = (err && err.message) || String(err);
       contentEl.innerHTML = formatMarkdown(
-        `❌ **Lỗi:** ${msg}\n\n` +
-          `Gợi ý khi gửi **ảnh**:\n` +
-          `- ⚙️ Preset **Groq vision**\n` +
-          `- Model: \`meta-llama/llama-4-scout-17b-16e-instruct\`\n` +
-          `- Ảnh ≤ 4 tấm, tự nén JPEG\n` +
-          `- Key Groq free: https://console.groq.com`
+        "**Loi:** " +
+          msg +
+          "\n\n" +
+          "Goi y khi gui anh:\n" +
+          "- Cai dat preset **Groq vision**\n" +
+          "- Model: `meta-llama/llama-4-scout-17b-16e-instruct`\n" +
+          "- Anh toi da 4 tam\n" +
+          "- Key free: https://console.groq.com"
       );
       els.statusDot.classList.add("err");
       els.statusDot.classList.remove("ok");
@@ -589,12 +599,13 @@ Không bịa API; nếu không chắc hãy nói rõ.`;
   }
 
   function bindSuggestions() {
-    els.messages.querySelectorAll("[data-q]").forEach((b) => {
-      b.onclick = () => {
-        els.input.value = b.getAttribute("data-q") || "";
+    const nodes = els.messages.querySelectorAll("[data-q]");
+    for (let i = 0; i < nodes.length; i++) {
+      nodes[i].onclick = function () {
+        els.input.value = this.getAttribute("data-q") || "";
         els.form.requestSubmit();
       };
-    });
+    }
   }
 
   function autoResize() {
@@ -612,7 +623,16 @@ Không bịa API; nếu không chắc hãy nói rõ.`;
     els.backdrop.hidden = true;
   }
 
-  // Events
+  function pickImageFromDevice() {
+    const input = document.getElementById("fileImage");
+    if (!input) {
+      alert("Khong tim thay o chon anh. Thu Ctrl+F5.");
+      return;
+    }
+    input.value = "";
+    input.click();
+  }
+
   els.form.addEventListener("submit", (e) => {
     e.preventDefault();
     sendMessage(els.input.value);
@@ -625,14 +645,13 @@ Không bịa API; nếu không chắc hãy nói rõ.`;
     }
   });
 
-  // Paste image from clipboard
   els.input.addEventListener("paste", (e) => {
-    const items = e.clipboardData?.items;
+    const items = e.clipboardData && e.clipboardData.items;
     if (!items) return;
     const files = [];
-    for (const it of items) {
-      if (it.type.startsWith("image/")) {
-        const f = it.getAsFile();
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.indexOf("image/") === 0) {
+        const f = items[i].getAsFile();
         if (f) files.push(f);
       }
     }
@@ -642,7 +661,6 @@ Không bịa API; nếu không chắc hãy nói rõ.`;
     }
   });
 
-  // Drag & drop on composer
   els.form.addEventListener("dragover", (e) => {
     e.preventDefault();
     els.form.classList.add("drag");
@@ -651,49 +669,43 @@ Không bịa API; nếu không chắc hãy nói rõ.`;
   els.form.addEventListener("drop", (e) => {
     e.preventDefault();
     els.form.classList.remove("drag");
-    if (e.dataTransfer?.files?.length) addFiles(e.dataTransfer.files);
+    if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) {
+      addFiles(e.dataTransfer.files);
+    }
   });
 
-  // + button → open image picker from device (simple & reliable)
-  function wirePlusButton() {
+  // Plus button: open device image picker
+  (function wirePlus() {
     const btn = document.getElementById("btnPlus");
     const input = document.getElementById("fileImage");
-    if (!btn) {
-      console.error("Jarvis: #btnPlus not found");
+    if (!btn || !input) {
+      console.error("Jarvis: btnPlus or fileImage missing");
       return;
     }
-    if (!input) {
-      console.error("Jarvis: #fileImage not found");
-      return;
-    }
-    const openPicker = (e) => {
-      if (e) {
-        e.preventDefault();
-        e.stopPropagation();
-      }
+    btn.addEventListener("click", function (e) {
+      e.preventDefault();
+      e.stopPropagation();
       if (busy) return;
       pickImageFromDevice();
-    };
-    btn.onclick = openPicker;
-    btn.addEventListener("click", openPicker, true);
-
-    input.onchange = () => {
+    });
+    input.addEventListener("change", function () {
       if (input.files && input.files.length) addFiles(input.files);
       input.value = "";
-    };
-  }
-  wirePlusButton();
+    });
+  })();
 
   els.btnNew.addEventListener("click", newChat);
   els.btnSettings.addEventListener("click", openSettings);
   els.btnTopSettings.addEventListener("click", openSettings);
-  els.btnOpenSidebar?.addEventListener("click", openSidebar);
-  els.btnCloseSidebar?.addEventListener("click", closeSidebar);
-  els.backdrop?.addEventListener("click", closeSidebar);
+  if (els.btnOpenSidebar) els.btnOpenSidebar.addEventListener("click", openSidebar);
+  if (els.btnCloseSidebar) els.btnCloseSidebar.addEventListener("click", closeSidebar);
+  if (els.backdrop) els.backdrop.addEventListener("click", closeSidebar);
 
-  els.cfgPreset.addEventListener("change", () => applyPreset(els.cfgPreset.value));
+  els.cfgPreset.addEventListener("change", function () {
+    applyPreset(els.cfgPreset.value);
+  });
 
-  els.btnSave.addEventListener("click", () => {
+  els.btnSave.addEventListener("click", function () {
     saveCfg({
       preset: els.cfgPreset.value,
       base: els.cfgBase.value.trim().replace(/\/$/, ""),
@@ -704,11 +716,13 @@ Không bịa API; nếu không chắc hãy nói rõ.`;
     });
     els.testOut.hidden = false;
     els.testOut.className = "test-out ok";
-    els.testOut.textContent = "Đã lưu trên trình duyệt này.";
-    setTimeout(() => els.modal.close(), 400);
+    els.testOut.textContent = "Da luu tren trinh duyet nay.";
+    setTimeout(function () {
+      els.modal.close();
+    }, 400);
   });
 
-  els.btnTest.addEventListener("click", async () => {
+  els.btnTest.addEventListener("click", async function () {
     saveCfg({
       preset: els.cfgPreset.value,
       base: els.cfgBase.value.trim().replace(/\/$/, ""),
@@ -719,25 +733,29 @@ Không bịa API; nếu không chắc hãy nói rõ.`;
     });
     els.testOut.hidden = false;
     els.testOut.className = "test-out";
-    els.testOut.textContent = "Đang test…";
+    els.testOut.textContent = "Dang test...";
     try {
       const res = await chatCompletion(
-        [{ role: "user", content: "Trả lời đúng 1 từ: OK" }],
+        [{ role: "user", content: "Tra loi dung 1 tu: OK" }],
         { stream: false }
       );
       const data = await res.json();
-      const t = data.choices?.[0]?.message?.content || "";
+      const t =
+        (data.choices &&
+          data.choices[0] &&
+          data.choices[0].message &&
+          data.choices[0].message.content) ||
+        "";
       els.testOut.className = "test-out ok";
-      els.testOut.textContent = `OK — ${t.slice(0, 80)}`;
+      els.testOut.textContent = "OK - " + String(t).slice(0, 80);
     } catch (err) {
       els.testOut.className = "test-out err";
       els.testOut.textContent = err.message || String(err);
     }
   });
 
-  // Boot
   loadChats();
-  activeId = chats[0]?.id || null;
+  activeId = chats[0] ? chats[0].id : null;
   refreshModelChip();
   renderHistory();
   renderMessages();
