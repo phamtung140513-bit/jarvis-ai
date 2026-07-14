@@ -6,20 +6,20 @@
   <title>Jarvis AI — Chat</title>
   <meta name="description" content="Jarvis AI — chat web kiểu ChatGPT, host free trên GitHub Pages." />
   <meta name="theme-color" content="#212121" />
-  <!-- Project site: always resolve assets under /jarvis-ai/ -->
+  <!-- Works on both /repo/ project Pages and root user/org Pages -->
   <script>
     (function () {
       var p = location.pathname;
-      if (p.indexOf("/jarvis-ai") === 0 && !p.endsWith("/") && !/\.html?$/i.test(p)) {
+      if (p.length > 1 && !p.endsWith("/") && !/\.html?$/i.test(p)) {
         location.replace(p + "/" + location.search + location.hash);
       }
     })();
   </script>
-  <link rel="icon" href="./assets/icon.jpg" type="image/jpeg" />
+  <link rel="icon" href="assets/icon.jpg" type="image/jpeg" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="./chat.css" />
+  <link rel="stylesheet" href="chat.css" />
 </head>
 <body>
   <div class="app" id="app">
@@ -35,11 +35,11 @@
       <div class="history" id="history" aria-label="Lịch sử chat"></div>
 
       <div class="sidebar-bottom">
-        <a class="side-link" href="./landing.html">🏠 Trang giới thiệu</a>
+        <a class="side-link" href="landing.html">🏠 Trang giới thiệu</a>
         <a class="side-link" href="https://t.me/grokapiai_bot" target="_blank" rel="noopener">✈️ Bot Telegram</a>
         <button type="button" class="side-link as-btn" id="btnSettings">⚙️ Cài đặt API</button>
         <div class="user-chip">
-          <img src="./assets/bot-avatar.jpg" alt="" width="28" height="28" />
+          <img src="assets/bot-avatar.jpg" alt="" width="28" height="28" />
           <div>
             <div class="user-name">Jarvis AI</div>
             <div class="user-sub" id="modelChip">chưa cấu hình</div>
@@ -63,7 +63,7 @@
 
       <section class="messages" id="messages" aria-live="polite">
         <div class="welcome" id="welcome">
-          <img class="welcome-avatar" src="./assets/bot-avatar.jpg" alt="Jarvis" />
+          <img class="welcome-avatar" src="assets/bot-avatar.jpg" alt="Jarvis" />
           <h1>Jarvis AI</h1>
           <p>Chat kiểu ChatGPT — chạy free trên GitHub Pages.<br />Cần API key (Groq free / OpenRouter) trong <strong>Cài đặt</strong>.</p>
           <div class="suggestions">
@@ -151,6 +151,6 @@
     </form>
   </dialog>
 
-  <script src="./chat.js"></script>
+  <script src="chat.js"></script>
 </body>
 </html>
