@@ -1,7 +1,7 @@
 {
-  "apiBase": "",
-  "sameOrigin": true,
+  "apiBase": "http://127.0.0.1:7860",
+  "sameOrigin": false,
   "telegramBot": "https://t.me/grokapiai_bot",
   "appName": "Jarvis AI",
-  "note": "apiBase empty = same domain as the page (recommended). Only set full URL if frontend is on GitHub Pages and API is on another host."
+  "note": "GitHub Pages: set apiBase to your tunnel/VPS URL (https://xxx.trycloudflare.com). Local same-server: use http://127.0.0.1:7860 or empty when opened on :7860."
 }

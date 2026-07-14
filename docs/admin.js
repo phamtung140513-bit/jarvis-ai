@@ -253,9 +253,15 @@
     }
   };
 
-  // Prefill API base for GitHub Pages
-  if (location.hostname.toLowerCase().indexOf("github.io") !== -1) {
-    $("apiBaseLogin").value = localStorage.getItem(LS_API) || "http://127.0.0.1:7860";
+  // Prefill API base
+  var defaultApi =
+    location.hostname.toLowerCase().indexOf("github.io") !== -1
+      ? "http://127.0.0.1:7860"
+      : location.origin || "http://127.0.0.1:7860";
+  if ($("apiBaseLogin")) {
+    $("apiBaseLogin").value = localStorage.getItem(LS_API) || defaultApi;
+    $("apiBaseLogin").placeholder =
+      "http://127.0.0.1:7860 hoac https://xxx.trycloudflare.com";
   }
 
   if (token()) showDash();
