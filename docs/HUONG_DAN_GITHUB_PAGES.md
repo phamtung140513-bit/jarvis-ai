@@ -21,7 +21,10 @@ cd C:\Users\Admin\Jarvis-AI\docs
 python -m http.server 8080
 ```
 
-Mở: http://127.0.0.1:8080
+- **Web chat (ChatGPT-style):** http://127.0.0.1:8080/  
+- **Landing / giá:** http://127.0.0.1:8080/landing.html  
+
+Lần đầu mở chat → ⚙️ dán **Groq API key** (free): https://console.groq.com
 
 ## 2. Tạo repo trên GitHub
 
