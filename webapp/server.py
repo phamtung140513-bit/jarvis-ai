@@ -40,6 +40,7 @@ from database.sqlite import Database, set_db  # noqa: E402
 from product.access_codes import create_access_code  # noqa: E402
 from product.plans import PLANS, get_plan  # noqa: E402
 from database.repos import load_recent_messages, save_message  # noqa: E402
+from product.google_auth import upsert_google_user, verify_google_id_token  # noqa: E402
 from product.users import (  # noqa: E402
     deactivate_user,
     list_users,
@@ -89,6 +90,10 @@ class DelUserBody(BaseModel):
     telegram_id: int
 
 
+class GoogleLoginBody(BaseModel):
+    credential: str = Field(..., min_length=10, description="Google GIS ID token JWT")
+
+
 class SessionMemory:
     def __init__(self, max_messages: int = 40) -> None:
         self._max = max_messages
@@ -114,13 +119,17 @@ def create_app() -> FastAPI:
 
     access_token = (settings.web_access_token or os.getenv("WEB_ACCESS_TOKEN") or "").strip()
     admin_key = (settings.web_admin_key or os.getenv("WEB_ADMIN_KEY") or "").strip()
+    google_client_id = (settings.google_client_id or os.getenv("GOOGLE_CLIENT_ID") or "").strip()
+    google_auth_required = bool(settings.google_auth_required)
     cors_raw = (settings.web_cors_origins or os.getenv("WEB_CORS_ORIGINS") or "*").strip()
     cors_origins = [o.strip() for o in cors_raw.split(",") if o.strip()]
 
     # Admin session tokens (in-memory; restart invalidates)
     admin_sessions: set[str] = set()
+    # Google user sessions: token -> user dict
+    user_sessions: dict[str, dict[str, Any]] = {}
 
-    app = FastAPI(title=f"{settings.app_name} Web", version="1.2")
+    app = FastAPI(title=f"{settings.app_name} Web", version="1.3")
     app.state.settings = settings
     app.state.memory = memory
     app.state.grok = grok
@@ -128,6 +137,9 @@ def create_app() -> FastAPI:
     app.state.access_token = access_token
     app.state.admin_key = admin_key
     app.state.admin_sessions = admin_sessions
+    app.state.user_sessions = user_sessions
+    app.state.google_client_id = google_client_id
+    app.state.google_auth_required = google_auth_required
 
     @app.on_event("startup")
     async def _startup() -> None:
@@ -154,15 +166,37 @@ def create_app() -> FastAPI:
             name="docs-assets",
         )
 
-    def _check_user_token(authorization: str | None, x_token: str | None) -> None:
-        if not access_token:
-            return
-        bearer = ""
+    def _bearer(authorization: str | None) -> str:
         if authorization and authorization.lower().startswith("bearer "):
-            bearer = authorization[7:].strip()
-        got = (x_token or bearer or "").strip()
-        if got != access_token:
-            raise HTTPException(status_code=401, detail="Sai user access token")
+            return authorization[7:].strip()
+        return ""
+
+    def _check_user_token(
+        authorization: str | None,
+        x_token: str | None,
+        x_user_session: str | None = None,
+    ) -> dict[str, Any] | None:
+        """Validate optional WEB_ACCESS_TOKEN and/or Google session."""
+        # Legacy shared token
+        if access_token:
+            bearer = _bearer(authorization)
+            got = (x_token or bearer or "").strip()
+            if got != access_token:
+                # allow Google session instead of access token
+                if not (x_user_session and x_user_session in user_sessions):
+                    raise HTTPException(status_code=401, detail="Sai user access token")
+
+        if google_auth_required:
+            sess = (x_user_session or "").strip()
+            if not sess or sess not in user_sessions:
+                raise HTTPException(
+                    status_code=401,
+                    detail="Can dang nhap Google",
+                )
+            return user_sessions[sess]
+        if x_user_session and x_user_session in user_sessions:
+            return user_sessions[x_user_session]
+        return None
 
     def _check_admin(
         authorization: str | None,
@@ -252,26 +286,86 @@ def create_app() -> FastAPI:
             "app": settings.app_name,
             "provider": settings.provider,
             "model": settings.resolved_model,
-            "auth_required": bool(access_token),
+            "auth_required": bool(access_token) or google_auth_required,
+            "google_auth": bool(google_client_id),
+            "google_auth_required": google_auth_required and bool(google_client_id),
             "admin_enabled": bool(admin_key),
             "same_origin_ui": True,
         }
 
     @app.get("/api/config")
     async def public_config() -> dict[str, Any]:
-        # Public: no secrets
+        # Public: no secrets (client_id is public by design for GIS)
         return {
             "app_name": settings.app_name,
             "tagline": settings.product_tagline,
             "provider": settings.provider,
             "model": settings.resolved_model,
-            "auth_required": bool(access_token),
+            "auth_required": bool(access_token) or (
+                google_auth_required and bool(google_client_id)
+            ),
+            "google_client_id": google_client_id,
+            "google_auth_required": google_auth_required and bool(google_client_id),
             "admin_enabled": bool(admin_key),
             "telegram_bot": "https://t.me/grokapiai_bot",
             "role": "coder",
             "apiBase": "",
             "same_origin": True,
         }
+
+    @app.post("/api/auth/google")
+    async def auth_google(body: GoogleLoginBody) -> dict[str, Any]:
+        """Exchange Google ID token for app session (Sign in with Google)."""
+        if not google_client_id:
+            raise HTTPException(
+                503,
+                "GOOGLE_CLIENT_ID chua cau hinh. Xem docs/HUONG_DAN_GOOGLE_LOGIN.md",
+            )
+        try:
+            info = verify_google_id_token(body.credential, google_client_id)
+        except Exception as exc:
+            logger.warning("Google token invalid: %s", exc)
+            raise HTTPException(401, f"Google token khong hop le: {exc}") from exc
+
+        async with db.session() as session:
+            try:
+                user = await upsert_google_user(session, info)
+            except ValueError as exc:
+                raise HTTPException(403, str(exc)) from exc
+
+        sess = secrets.token_urlsafe(32)
+        user_sessions[sess] = {
+            "id": user.id,
+            "google_sub": user.google_sub,
+            "email": user.email,
+            "name": user.name,
+            "picture": user.picture,
+        }
+        return {
+            "ok": True,
+            "session_token": sess,
+            "user": {
+                "email": user.email,
+                "name": user.name,
+                "picture": user.picture,
+            },
+        }
+
+    @app.get("/api/auth/me")
+    async def auth_me(
+        x_user_session: str | None = Header(default=None, alias="X-User-Session"),
+    ) -> dict[str, Any]:
+        if not x_user_session or x_user_session not in user_sessions:
+            raise HTTPException(401, "Chua dang nhap")
+        return {"ok": True, "user": user_sessions[x_user_session]}
+
+    @app.post("/api/auth/logout")
+    async def auth_logout(
+        x_user_session: str | None = Header(default=None, alias="X-User-Session"),
+    ) -> dict[str, Any]:
+        if x_user_session and x_user_session in user_sessions:
+            user_sessions.pop(x_user_session, None)
+        return {"ok": True}
 
     @app.post("/api/admin/login")
     async def admin_login(body: AdminLoginBody) -> dict[str, Any]:
@@ -433,13 +527,22 @@ def create_app() -> FastAPI:
         request: Request,
         authorization: str | None = Header(default=None),
         x_web_token: str | None = Header(default=None, alias="X-Web-Token"),
+        x_user_session: str | None = Header(default=None, alias="X-User-Session"),
     ):
-        _check_user_token(authorization, x_web_token)
+        guser = _check_user_token(authorization, x_web_token, x_user_session)
         text = body.message.strip()
         if not text:
             raise HTTPException(400, "Tin nhan trong")
 
-        sid = (body.session_id or "").strip() or secrets.token_hex(8)
+        # Prefer stable session per Google account when logged in
+        sid = (body.session_id or "").strip()
+        if not sid and guser:
+            sid = "g_" + hashlib.sha256(
+                str(guser.get("google_sub", "")).encode()
+            ).hexdigest()[:16]
+        if not sid:
+            sid = secrets.token_hex(8)
+
         mem: SessionMemory = request.app.state.memory
         client: GrokClient = request.app.state.grok
 
@@ -492,9 +595,10 @@ def create_app() -> FastAPI:
         session_id: str = "",
         authorization: str | None = Header(default=None),
         x_web_token: str | None = Header(default=None, alias="X-Web-Token"),
+        x_user_session: str | None = Header(default=None, alias="X-User-Session"),
     ) -> dict[str, Any]:
         """Load persisted messages for a browser session (after tab close / restart)."""
-        _check_user_token(authorization, x_web_token)
+        _check_user_token(authorization, x_web_token, x_user_session)
         sid = (session_id or "").strip()
         if not sid:
             return {"ok": True, "session_id": "", "messages": []}
@@ -507,8 +611,9 @@ def create_app() -> FastAPI:
         body: dict[str, str] | None = None,
         authorization: str | None = Header(default=None),
         x_web_token: str | None = Header(default=None, alias="X-Web-Token"),
+        x_user_session: str | None = Header(default=None, alias="X-User-Session"),
     ) -> dict[str, Any]:
-        _check_user_token(authorization, x_web_token)
+        _check_user_token(authorization, x_web_token, x_user_session)
         sid = (body or {}).get("session_id", "").strip()
         if sid:
             request.app.state.memory.clear(sid)

@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Jarvis AI - Chat</title>
-  <meta name="description" content="Jarvis AI coding chat" />
+  <meta name="description" content="Jarvis AI coding chat - Sign in with Google" />
   <meta name="theme-color" content="#212121" />
   <script>
     (function () {
@@ -18,10 +18,24 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="chat.css?v=10" />
+  <link rel="stylesheet" href="chat.css?v=11" />
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
-  <div class="app" id="app">
+  <!-- Google login gate (like ChatGPT) -->
+  <div id="authGate" class="auth-gate">
+    <div class="auth-card">
+      <img src="assets/bot-avatar.jpg" alt="Jarvis" class="auth-logo" />
+      <h1>Jarvis AI</h1>
+      <p class="auth-sub">Senior coding assistant. Dang nhap bang Google de bat dau — giong cac AI khac.</p>
+      <div id="googleBtnWrap" class="google-btn-wrap"></div>
+      <p class="auth-hint" id="authHint">Dang tai Google Sign-In...</p>
+      <p class="auth-err hidden" id="authErr"></p>
+      <p class="auth-foot">Khong share API key. Server giu key AI.</p>
+    </div>
+  </div>
+
+  <div class="app hidden" id="app">
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-top">
         <button type="button" class="btn new-chat" id="btnNew" title="Chat moi">
@@ -35,8 +49,9 @@
       <div class="sidebar-bottom">
         <a class="side-link" href="landing.html">Trang gioi thieu</a>
         <a class="side-link" id="tgLink" href="https://t.me/grokapiai_bot" target="_blank" rel="noopener">Bot Telegram</a>
+        <button type="button" class="side-link as-btn" id="btnLogout">Dang xuat</button>
         <div class="user-chip">
-          <img src="assets/bot-avatar.jpg" alt="" width="28" height="28" />
+          <img src="assets/bot-avatar.jpg" alt="" width="28" height="28" id="userAvatar" />
           <div>
             <div class="user-name" id="appNameLabel">Jarvis AI</div>
             <div class="user-sub" id="modelChip">coder mode</div>
@@ -54,13 +69,17 @@
           <span id="chatTitle">Jarvis</span>
           <span class="dot" id="statusDot" title="Trang thai"></span>
         </div>
+        <div class="user-pill" id="userPill" title="">
+          <img id="userPillImg" alt="" width="24" height="24" />
+          <span id="userPillName">User</span>
+        </div>
       </header>
 
       <section class="messages" id="messages" aria-live="polite">
         <div class="welcome" id="welcome">
           <img class="welcome-avatar" src="assets/bot-avatar.jpg" alt="Jarvis" />
           <h1>Jarvis AI</h1>
-          <p>Senior coding assistant. Chi can chat — khong can API key.</p>
+          <p>Senior coding assistant. Xin chao <strong id="welcomeName">ban</strong>!</p>
           <div class="suggestions">
             <button type="button" data-q="Viet API FastAPI CRUD user (SQLAlchemy + Pydantic), co error handling">FastAPI CRUD</button>
             <button type="button" data-q="Review code Python ve bug va security (toi se paste code)">Code review</button>
@@ -84,11 +103,11 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
           </button>
         </form>
-        <p class="disclaimer">Jarvis AI — coding assistant</p>
+        <p class="disclaimer">Dang nhap bang Google — giong ChatGPT / Claude.</p>
       </div>
     </main>
   </div>
 
-  <script src="chat.js?v=10"></script>
+  <script src="chat.js?v=11"></script>
 </body>
 </html>

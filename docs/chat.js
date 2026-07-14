@@ -5,6 +5,8 @@
 (() => {
   const LS_API = "jarvis_api_base_v2";
   const LS_USER_TOKEN = "jarvis_user_token_v2";
+  const LS_GOOGLE = "jarvis_google_session_v1";
+  const LS_GOOGLE_USER = "jarvis_google_user_v1";
   const LS_CHATS = "jarvis_chats_v3"; // stable key — survives tab close
   const LS_ACTIVE = "jarvis_active_chat_v3";
   const LS_SID = "jarvis_sid_v3";
@@ -14,6 +16,11 @@
 
   const $ = (id) => document.getElementById(id);
   const els = {
+    authGate: $("authGate"),
+    app: $("app"),
+    googleBtnWrap: $("googleBtnWrap"),
+    authHint: $("authHint"),
+    authErr: $("authErr"),
     sidebar: $("sidebar"),
     backdrop: $("backdrop"),
     history: $("history"),
@@ -23,6 +30,7 @@
     input: $("input"),
     send: $("btnSend"),
     btnNew: $("btnNew"),
+    btnLogout: $("btnLogout"),
     btnOpenSidebar: $("btnOpenSidebar"),
     btnCloseSidebar: $("btnCloseSidebar"),
     btnPlus: $("btnPlus"),
@@ -33,7 +41,16 @@
     chatTitle: $("chatTitle"),
     statusDot: $("statusDot"),
     tgLink: $("tgLink"),
+    userAvatar: $("userAvatar"),
+    userPill: $("userPill"),
+    userPillImg: $("userPillImg"),
+    userPillName: $("userPillName"),
+    welcomeName: $("welcomeName"),
   };
+
+  let googleUser = null;
+  let googleSession = localStorage.getItem(LS_GOOGLE) || "";
+  let serverConfig = { google_client_id: "", google_auth_required: false };
 
   let cfgPublic = { apiBase: "", telegramBot: "https://t.me/grokapiai_bot" };
   let pendingImages = [];
@@ -69,7 +86,144 @@
     const h = Object.assign({ "Content-Type": "application/json" }, extra || {});
     const t = userToken();
     if (t) h["X-Web-Token"] = t;
+    if (googleSession) h["X-User-Session"] = googleSession;
     return h;
+  }
+
+  function showApp() {
+    if (els.authGate) els.authGate.classList.add("hidden");
+    if (els.app) els.app.classList.remove("hidden");
+  }
+
+  function showGate() {
+    if (els.authGate) els.authGate.classList.remove("hidden");
+    if (els.app) els.app.classList.add("hidden");
+  }
+
+  function applyUserUi(user) {
+    googleUser = user || null;
+    if (!user) return;
+    const name = user.name || user.email || "User";
+    if (els.userPillName) els.userPillName.textContent = name;
+    if (els.welcomeName) els.welcomeName.textContent = name.split(" ")[0] || name;
+    if (user.picture) {
+      if (els.userPillImg) els.userPillImg.src = user.picture;
+      if (els.userAvatar) els.userAvatar.src = user.picture;
+    }
+    if (els.userPill) els.userPill.title = user.email || name;
+    if (els.modelChip) els.modelChip.textContent = user.email || "signed in";
+  }
+
+  function logoutGoogle() {
+    googleSession = "";
+    googleUser = null;
+    localStorage.removeItem(LS_GOOGLE);
+    localStorage.removeItem(LS_GOOGLE_USER);
+    showGate();
+    renderGoogleButton();
+  }
+
+  async function handleGoogleCredential(response) {
+    try {
+      if (els.authErr) {
+        els.authErr.classList.add("hidden");
+        els.authErr.textContent = "";
+      }
+      if (els.authHint) els.authHint.textContent = "Dang xac thuc...";
+      const r = await fetch(apiBase() + "/api/auth/google", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ credential: response.credential }),
+      });
+      const text = await r.text();
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch {
+        data = { detail: text };
+      }
+      if (!r.ok) throw new Error(data.detail || text || "Login fail");
+      googleSession = data.session_token;
+      localStorage.setItem(LS_GOOGLE, googleSession);
+      localStorage.setItem(LS_GOOGLE_USER, JSON.stringify(data.user || {}));
+      applyUserUi(data.user);
+      showApp();
+      await pingServer();
+    } catch (e) {
+      if (els.authHint) els.authHint.textContent = "";
+      if (els.authErr) {
+        els.authErr.classList.remove("hidden");
+        els.authErr.textContent = String(e.message || e);
+      }
+    }
+  }
+
+  function renderGoogleButton() {
+    const clientId = serverConfig.google_client_id || "";
+    if (!clientId) {
+      if (els.authHint) {
+        els.authHint.textContent =
+          "Chua cau hinh GOOGLE_CLIENT_ID tren server. Xem docs/HUONG_DAN_GOOGLE_LOGIN.md";
+      }
+      // Dev fallback: allow enter without Google if not configured
+      if (!serverConfig.google_auth_required) {
+        showApp();
+      }
+      return;
+    }
+    if (typeof google === "undefined" || !google.accounts || !google.accounts.id) {
+      if (els.authHint) els.authHint.textContent = "Dang tai Google SDK...";
+      setTimeout(renderGoogleButton, 400);
+      return;
+    }
+    if (els.authHint) els.authHint.textContent = "Bam nut Google ben duoi";
+    google.accounts.id.initialize({
+      client_id: clientId,
+      callback: handleGoogleCredential,
+      auto_select: false,
+      cancel_on_tap_outside: true,
+    });
+    if (els.googleBtnWrap) {
+      els.googleBtnWrap.innerHTML = "";
+      google.accounts.id.renderButton(els.googleBtnWrap, {
+        theme: "outline",
+        size: "large",
+        shape: "pill",
+        text: "signin_with",
+        width: 320,
+      });
+    }
+  }
+
+  async function restoreGoogleSession() {
+    if (!googleSession) return false;
+    try {
+      const r = await fetch(apiBase() + "/api/auth/me", {
+        headers: { "X-User-Session": googleSession },
+        cache: "no-store",
+      });
+      if (!r.ok) {
+        logoutGoogle();
+        return false;
+      }
+      const j = await r.json();
+      applyUserUi(j.user);
+      showApp();
+      return true;
+    } catch (e) {
+      // offline / server down — keep local cache if any
+      try {
+        const cached = JSON.parse(localStorage.getItem(LS_GOOGLE_USER) || "null");
+        if (cached) {
+          applyUserUi(cached);
+          showApp();
+          return true;
+        }
+      } catch (e2) {
+        /* ignore */
+      }
+      return false;
+    }
   }
 
   async function loadPublicConfig() {
@@ -578,13 +732,45 @@
   });
 
   els.btnNew.addEventListener("click", newChat);
+  if (els.btnLogout) els.btnLogout.addEventListener("click", logoutGoogle);
   if (els.btnOpenSidebar) els.btnOpenSidebar.addEventListener("click", openSidebar);
   if (els.btnCloseSidebar) els.btnCloseSidebar.addEventListener("click", closeSidebar);
   if (els.backdrop) els.backdrop.addEventListener("click", closeSidebar);
 
-  // Boot — restore chats after tab close
+  // Boot — Google gate then chats
   (async function boot() {
     await loadPublicConfig();
+    // Merge server public config (google client id, etc.)
+    try {
+      const r = await fetch(apiBase() + "/api/config", { cache: "no-store" });
+      if (r.ok) {
+        serverConfig = Object.assign(serverConfig, await r.json());
+      }
+    } catch (e) {
+      if (els.authHint) {
+        els.authHint.textContent =
+          "Khong ket noi server " + apiBase() + " — chay python -m webapp.server";
+      }
+    }
+
+    const needGoogle =
+      serverConfig.google_auth_required && serverConfig.google_client_id;
+    let ok = false;
+    if (needGoogle) {
+      ok = await restoreGoogleSession();
+      if (!ok) {
+        showGate();
+        renderGoogleButton();
+      }
+    } else {
+      // Google optional / not configured → open app
+      showApp();
+      if (serverConfig.google_client_id) {
+        // still show button? skip, optional mode
+      }
+      ok = true;
+    }
+
     loadChats();
     activeId =
       localStorage.getItem(LS_ACTIVE) ||
@@ -597,29 +783,37 @@
       sessionId = cur.sessionId;
       localStorage.setItem(LS_SID, sessionId);
     }
-    renderHistory();
-    renderMessages();
-    bindSuggestions();
-    await pingServer();
-    // Optional: re-sync text history from server DB
-    if (sessionId) {
-      try {
-        const r = await fetch(
-          apiBase() + "/api/chat/history?session_id=" + encodeURIComponent(sessionId),
-          { headers: userHeaders(), cache: "no-store" }
-        );
-        if (r.ok) {
-          const j = await r.json();
-          if (j.messages && j.messages.length && cur && (!cur.messages || !cur.messages.length)) {
-            cur.messages = j.messages.map(function (m) {
-              return { role: m.role, content: m.content, images: [] };
-            });
-            persistChats();
-            renderMessages();
+    if (ok) {
+      renderHistory();
+      renderMessages();
+      bindSuggestions();
+      await pingServer();
+      if (sessionId) {
+        try {
+          const r = await fetch(
+            apiBase() +
+              "/api/chat/history?session_id=" +
+              encodeURIComponent(sessionId),
+            { headers: userHeaders(), cache: "no-store" }
+          );
+          if (r.ok) {
+            const j = await r.json();
+            if (
+              j.messages &&
+              j.messages.length &&
+              cur &&
+              (!cur.messages || !cur.messages.length)
+            ) {
+              cur.messages = j.messages.map(function (m) {
+                return { role: m.role, content: m.content, images: [] };
+              });
+              persistChats();
+              renderMessages();
+            }
           }
+        } catch (e) {
+          /* offline ok */
         }
-      } catch (e) {
-        /* offline ok */
       }
     }
   })();

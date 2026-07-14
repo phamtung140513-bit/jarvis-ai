@@ -121,6 +121,10 @@ class Settings(BaseSettings):
     web_access_token: str = Field("", alias="WEB_ACCESS_TOKEN")
     web_admin_key: str = Field("", alias="WEB_ADMIN_KEY")
     web_cors_origins: str = Field("*", alias="WEB_CORS_ORIGINS")
+    # Google Sign-In (OAuth client ID from Google Cloud Console)
+    google_client_id: str = Field("", alias="GOOGLE_CLIENT_ID")
+    # If true, web chat requires Google login first
+    google_auth_required: bool = Field(True, alias="GOOGLE_AUTH_REQUIRED")
 
     @field_validator("workspace_dir", mode="before")
     @classmethod

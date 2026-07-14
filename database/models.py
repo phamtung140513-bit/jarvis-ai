@@ -124,3 +124,22 @@ class UserTeaching(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=utcnow, nullable=False
     )
+
+
+class GoogleWebUser(Base):
+    """Web users signed in with Google (like ChatGPT / Claude)."""
+
+    __tablename__ = "google_web_users"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    google_sub: Mapped[str] = mapped_column(String(64), unique=True, index=True, nullable=False)
+    email: Mapped[str | None] = mapped_column(String(256), nullable=True, index=True)
+    name: Mapped[str | None] = mapped_column(String(256), nullable=True)
+    picture: Mapped[str | None] = mapped_column(String(512), nullable=True)
+    active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    last_login_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, nullable=False
+    )

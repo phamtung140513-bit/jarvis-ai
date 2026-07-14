@@ -10,3 +10,5 @@ GitPython>=3.1.43
 # Web chat (cùng AI với bot)
 fastapi>=0.115.0
 uvicorn[standard]>=0.32.0
+# Google Sign-In (verify ID token)
+google-auth>=2.35.0
