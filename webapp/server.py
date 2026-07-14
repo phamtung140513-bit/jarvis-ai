@@ -13,6 +13,7 @@ Chay:
 
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
 import os
@@ -38,12 +39,19 @@ from config import get_settings  # noqa: E402
 from database.sqlite import Database, set_db  # noqa: E402
 from product.access_codes import create_access_code  # noqa: E402
 from product.plans import PLANS, get_plan  # noqa: E402
+from database.repos import load_recent_messages, save_message  # noqa: E402
 from product.users import (  # noqa: E402
     deactivate_user,
     list_users,
     set_user_plan,
     stats_summary,
 )
+
+
+def _session_uid(session_id: str) -> int:
+    """Map web session string → stable positive int for SQLite storage."""
+    h = hashlib.sha256(session_id.encode("utf-8")).hexdigest()[:15]
+    return int(h, 16)
 
 logger = logging.getLogger(__name__)
 
@@ -397,6 +405,28 @@ def create_app() -> FastAPI:
             ok = await deactivate_user(session, body.telegram_id)
         return {"ok": ok, "telegram_id": body.telegram_id}
 
+    async def _hydrate_session(sid: str) -> list[dict[str, str]]:
+        """Load history: RAM first, else SQLite (survives server restart)."""
+        mem: SessionMemory = app.state.memory
+        if not mem.get(sid):
+            try:
+                async with db.session() as session:
+                    rows = await load_recent_messages(
+                        session, _session_uid(sid), limit=settings.max_history_messages
+                    )
+                for m in rows:
+                    mem.add(sid, m["role"], m["content"])
+            except Exception:
+                logger.exception("hydrate session failed sid=%s", sid[:12])
+        return mem.get(sid)
+
+    async def _persist(sid: str, role: str, content: str) -> None:
+        try:
+            async with db.session() as session:
+                await save_message(session, _session_uid(sid), role, content)
+        except Exception:
+            logger.exception("persist message failed")
+
     @app.post("/api/chat")
     async def chat(
         body: ChatBody,
@@ -413,7 +443,9 @@ def create_app() -> FastAPI:
         mem: SessionMemory = request.app.state.memory
         client: GrokClient = request.app.state.grok
 
+        await _hydrate_session(sid)
         mem.add(sid, "user", text)
+        await _persist(sid, "user", text)
         history = mem.get(sid)
 
         if body.stream:
@@ -430,6 +462,7 @@ def create_app() -> FastAPI:
                     full = "".join(parts).strip()
                     if full:
                         mem.add(sid, "assistant", full)
+                        await _persist(sid, "assistant", full)
                     yield _sse({"type": "done", "session_id": sid})
                 except GrokError as exc:
                     logger.exception("web chat stream error")
@@ -451,7 +484,22 @@ def create_app() -> FastAPI:
         except GrokError as exc:
             raise HTTPException(502, str(exc)) from exc
         mem.add(sid, "assistant", reply)
+        await _persist(sid, "assistant", reply)
         return {"session_id": sid, "reply": reply}
+
+    @app.get("/api/chat/history")
+    async def chat_history(
+        session_id: str = "",
+        authorization: str | None = Header(default=None),
+        x_web_token: str | None = Header(default=None, alias="X-Web-Token"),
+    ) -> dict[str, Any]:
+        """Load persisted messages for a browser session (after tab close / restart)."""
+        _check_user_token(authorization, x_web_token)
+        sid = (session_id or "").strip()
+        if not sid:
+            return {"ok": True, "session_id": "", "messages": []}
+        msgs = await _hydrate_session(sid)
+        return {"ok": True, "session_id": sid, "messages": msgs}
 
     @app.post("/api/clear")
     async def clear(
@@ -464,6 +512,13 @@ def create_app() -> FastAPI:
         sid = (body or {}).get("session_id", "").strip()
         if sid:
             request.app.state.memory.clear(sid)
+            try:
+                from database.repos import clear_messages
+
+                async with db.session() as session:
+                    await clear_messages(session, _session_uid(sid))
+            except Exception:
+                logger.exception("clear db history failed")
         return {"ok": True}
 
     return app

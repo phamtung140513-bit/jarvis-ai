@@ -5,7 +5,9 @@
 (() => {
   const LS_API = "jarvis_api_base_v2";
   const LS_USER_TOKEN = "jarvis_user_token_v2";
-  const LS_CHATS = "jarvis_pages_chats_v2";
+  const LS_CHATS = "jarvis_chats_v3"; // stable key — survives tab close
+  const LS_ACTIVE = "jarvis_active_chat_v3";
+  const LS_SID = "jarvis_sid_v3";
   const MAX_IMAGES = 4;
   const MAX_EDGE = 1280;
   const JPEG_Q = 0.82;
@@ -38,7 +40,7 @@
   let chats = [];
   let activeId = null;
   let busy = false;
-  let sessionId = localStorage.getItem("jarvis_sid_v2") || "";
+  let sessionId = localStorage.getItem(LS_SID) || localStorage.getItem("jarvis_sid_v2") || "";
 
   /**
    * Same domain as the web UI by default (empty apiBase => location.origin).
@@ -84,10 +86,40 @@
     if (els.appNameLabel && cfgPublic.appName) els.appNameLabel.textContent = cfgPublic.appName;
   }
 
+  function _slimChats(list) {
+    // Drop big base64 images so localStorage never blows quota
+    return list.map(function (c) {
+      return {
+        id: c.id,
+        title: c.title,
+        updated: c.updated,
+        sessionId: c.sessionId || "",
+        messages: (c.messages || []).map(function (m) {
+          return {
+            role: m.role,
+            content: m.content || "",
+            // keep at most 1 small image marker, not full data url if huge
+            images: (m.images || []).length
+              ? m.images.filter(function (img) {
+                  return typeof img === "string" && img.length < 200000;
+                }).slice(0, 2)
+              : [],
+          };
+        }),
+      };
+    });
+  }
+
   function loadChats() {
     try {
-      chats = JSON.parse(localStorage.getItem(LS_CHATS) || "[]");
-    } catch {
+      // migrate old keys if present
+      var raw =
+        localStorage.getItem(LS_CHATS) ||
+        localStorage.getItem("jarvis_pages_chats_v2") ||
+        localStorage.getItem("jarvis_pages_chats_v1") ||
+        "[]";
+      chats = JSON.parse(raw);
+    } catch (e) {
       chats = [];
     }
     if (!Array.isArray(chats)) chats = [];
@@ -95,11 +127,31 @@
 
   function persistChats() {
     try {
-      localStorage.setItem(LS_CHATS, JSON.stringify(chats));
-    } catch {
-      /* quota */
+      localStorage.setItem(LS_CHATS, JSON.stringify(_slimChats(chats)));
+      if (activeId) localStorage.setItem(LS_ACTIVE, activeId);
+      if (sessionId) localStorage.setItem(LS_SID, sessionId);
+    } catch (e) {
+      // Quota: strip all images and retry
+      try {
+        chats.forEach(function (c) {
+          (c.messages || []).forEach(function (m) {
+            m.images = [];
+          });
+        });
+        localStorage.setItem(LS_CHATS, JSON.stringify(_slimChats(chats)));
+      } catch (e2) {
+        console.warn("persistChats failed", e2);
+      }
     }
   }
+
+  // Save when closing tab / switching away
+  window.addEventListener("beforeunload", function () {
+    persistChats();
+  });
+  document.addEventListener("visibilitychange", function () {
+    if (document.visibilityState === "hidden") persistChats();
+  });
 
   function uid() {
     return Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
@@ -236,10 +288,17 @@
   }
 
   function newChat() {
-    const c = { id: uid(), title: "Chat moi", messages: [], updated: Date.now() };
+    const c = {
+      id: uid(),
+      title: "Chat moi",
+      messages: [],
+      updated: Date.now(),
+      sessionId: "",
+    };
     chats.unshift(c);
     activeId = c.id;
     sessionId = "";
+    localStorage.removeItem(LS_SID);
     localStorage.removeItem("jarvis_sid_v2");
     clearPendingImages();
     persistChats();
@@ -420,7 +479,10 @@
               const j = JSON.parse(data);
               if (j.type === "meta" && j.session_id) {
                 sessionId = j.session_id;
-                localStorage.setItem("jarvis_sid_v2", sessionId);
+                localStorage.setItem(LS_SID, sessionId);
+                var ac = activeChat();
+                if (ac) ac.sessionId = sessionId;
+                persistChats();
               }
               if (j.type === "delta" && j.text) {
                 full += j.text;
@@ -438,7 +500,9 @@
         full = j.reply || "";
         if (j.session_id) {
           sessionId = j.session_id;
-          localStorage.setItem("jarvis_sid_v2", sessionId);
+          localStorage.setItem(LS_SID, sessionId);
+          var ac2 = activeChat();
+          if (ac2) ac2.sessionId = sessionId;
         }
       }
 
@@ -518,14 +582,45 @@
   if (els.btnCloseSidebar) els.btnCloseSidebar.addEventListener("click", closeSidebar);
   if (els.backdrop) els.backdrop.addEventListener("click", closeSidebar);
 
-  // Boot
+  // Boot — restore chats after tab close
   (async function boot() {
     await loadPublicConfig();
     loadChats();
-    activeId = chats[0] ? chats[0].id : null;
+    activeId =
+      localStorage.getItem(LS_ACTIVE) ||
+      (chats[0] ? chats[0].id : null);
+    if (activeId && !chats.find(function (c) { return c.id === activeId; })) {
+      activeId = chats[0] ? chats[0].id : null;
+    }
+    var cur = activeChat();
+    if (cur && cur.sessionId) {
+      sessionId = cur.sessionId;
+      localStorage.setItem(LS_SID, sessionId);
+    }
     renderHistory();
     renderMessages();
     bindSuggestions();
     await pingServer();
+    // Optional: re-sync text history from server DB
+    if (sessionId) {
+      try {
+        const r = await fetch(
+          apiBase() + "/api/chat/history?session_id=" + encodeURIComponent(sessionId),
+          { headers: userHeaders(), cache: "no-store" }
+        );
+        if (r.ok) {
+          const j = await r.json();
+          if (j.messages && j.messages.length && cur && (!cur.messages || !cur.messages.length)) {
+            cur.messages = j.messages.map(function (m) {
+              return { role: m.role, content: m.content, images: [] };
+            });
+            persistChats();
+            renderMessages();
+          }
+        }
+      } catch (e) {
+        /* offline ok */
+      }
+    }
   })();
 })();
