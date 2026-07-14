@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Jarvis AI - Chat</title>
-  <meta name="description" content="Jarvis AI - chat web kieu ChatGPT, host free tren GitHub Pages." />
+  <meta name="description" content="Jarvis AI coding chat" />
   <meta name="theme-color" content="#212121" />
   <script>
     (function () {
@@ -18,7 +18,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="chat.css?v=5" />
+  <link rel="stylesheet" href="chat.css?v=6" />
 </head>
 <body>
   <div class="app" id="app">
@@ -30,17 +30,17 @@
         <button type="button" class="icon-btn mobile-only" id="btnCloseSidebar" aria-label="Dong">X</button>
       </div>
 
-      <div class="history" id="history" aria-label="Lich su chat"></div>
+      <div class="history" id="history" aria-label="Lich su"></div>
 
       <div class="sidebar-bottom">
         <a class="side-link" href="landing.html">Trang gioi thieu</a>
-        <a class="side-link" href="https://t.me/grokapiai_bot" target="_blank" rel="noopener">Bot Telegram</a>
-        <button type="button" class="side-link as-btn" id="btnSettings">Cai dat API</button>
+        <a class="side-link" id="tgLink" href="https://t.me/grokapiai_bot" target="_blank" rel="noopener">Bot Telegram</a>
+        <button type="button" class="side-link as-btn" id="btnAdmin">Admin</button>
         <div class="user-chip">
           <img src="assets/bot-avatar.jpg" alt="" width="28" height="28" />
           <div>
-            <div class="user-name">Jarvis AI</div>
-            <div class="user-sub" id="modelChip">chua cau hinh</div>
+            <div class="user-name" id="appNameLabel">Jarvis AI</div>
+            <div class="user-sub" id="modelChip">coder mode</div>
           </div>
         </div>
       </div>
@@ -55,21 +55,21 @@
           <span id="chatTitle">Jarvis</span>
           <span class="dot" id="statusDot" title="Trang thai"></span>
         </div>
-        <button type="button" class="icon-btn" id="btnTopSettings" title="Cai dat">*</button>
+        <button type="button" class="icon-btn" id="btnAdminTop" title="Admin">*</button>
       </header>
 
       <section class="messages" id="messages" aria-live="polite">
         <div class="welcome" id="welcome">
           <img class="welcome-avatar" src="assets/bot-avatar.jpg" alt="Jarvis" />
           <h1>Jarvis AI</h1>
-          <p>Senior coding assistant — viet / review / debug code.<br />Can API key (Groq free) trong <strong>Cai dat</strong>.</p>
+          <p>Senior coding assistant. Nguoi dung chi can chat — <strong>khong can API key</strong>.</p>
           <div class="suggestions">
-            <button type="button" data-q="Viet API FastAPI CRUD user (SQLAlchemy + Pydantic), co error handling va huong dan chay">FastAPI CRUD</button>
-            <button type="button" data-q="Review doan code Python nay ve bug, security, performance (toi se paste code)">Code review</button>
-            <button type="button" data-q="Giai thich traceback Python va dua patch toi thieu (toi se paste log)">Debug traceback</button>
-            <button type="button" data-q="Thiet ke kien truc bot Telegram SaaS multi-user + quota + SQLite">Kien truc bot</button>
+            <button type="button" data-q="Viet API FastAPI CRUD user (SQLAlchemy + Pydantic), co error handling">FastAPI CRUD</button>
+            <button type="button" data-q="Review code Python ve bug va security (toi se paste code)">Code review</button>
+            <button type="button" data-q="Giai thich traceback va dua patch (toi se paste log)">Debug</button>
+            <button type="button" data-q="Thiet ke kien truc bot Telegram SaaS multi-user">Kien truc bot</button>
           </div>
-          <p class="hint">Lan dau: Cai dat → dan GROQ_API_KEY → Luu. AI mac dinh o che do CODER.</p>
+          <p class="hint">Admin: bam <strong>Admin</strong> (can key). User thuong khong vao duoc.</p>
         </div>
       </section>
 
@@ -77,86 +77,66 @@
         <div class="attach-preview" id="attachPreview" hidden></div>
         <form class="composer" id="form">
           <input type="file" id="fileImage" accept="image/*" multiple hidden />
-
           <div class="plus-wrap" id="plusWrap">
-            <button type="button" class="plus-btn" id="btnPlus" title="Anh tu may" aria-label="Them anh tu may">
-              <span class="plus-glyph" aria-hidden="true">+</span>
+            <button type="button" class="plus-btn" id="btnPlus" title="Anh tu may" aria-label="Them anh">
+              <span class="plus-glyph">+</span>
             </button>
           </div>
-
-          <textarea
-            id="input"
-            rows="1"
-            placeholder="Nhan tin cho Jarvis..."
-            autocomplete="off"
-            enterkeyhint="send"
-          ></textarea>
-          <button type="submit" id="btnSend" aria-label="Gui" title="Gui (Enter)">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-              <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
-            </svg>
+          <textarea id="input" rows="1" placeholder="Nhan tin cho Jarvis..." autocomplete="off" enterkeyhint="send"></textarea>
+          <button type="submit" id="btnSend" aria-label="Gui" title="Gui">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
           </button>
         </form>
-        <p class="disclaimer">Bam <strong style="color:#fff">+</strong> de chon anh tu may. Gui anh: preset <code>Groq vision</code>.</p>
+        <p class="disclaimer">User khong thay API key. Chi Admin (co key) moi cau hinh server.</p>
       </div>
     </main>
   </div>
 
-  <dialog class="modal" id="settingsModal">
-    <form method="dialog" class="modal-card" id="settingsForm">
+  <!-- Admin login (locked) -->
+  <dialog class="modal" id="adminLoginModal">
+    <form method="dialog" class="modal-card" id="adminLoginForm">
       <header>
-        <h2>Cai dat API</h2>
+        <h2>Admin</h2>
         <button type="submit" class="icon-btn" value="cancel" aria-label="Dong">X</button>
       </header>
-      <p class="modal-note">
-        GitHub Pages chi host <strong>file tinh</strong>. Chat goi API AI truc tiep tu trinh duyet
-        (OpenAI-compatible). Key luu <code>localStorage</code> — khong gui len GitHub.
-      </p>
-
+      <p class="modal-note">Chi chu so huu. Can <code>WEB_ADMIN_KEY</code> tren server. User thuong khong vao duoc.</p>
       <label>
-        Provider preset
-        <select id="cfgPreset">
-          <option value="groq">Groq text (free)</option>
-          <option value="groq-vision">Groq vision (anh) — khuyen nghi khi gui anh</option>
-          <option value="openrouter">OpenRouter</option>
-          <option value="xai">xAI Grok</option>
-          <option value="custom">Custom / Jarvis backend</option>
-        </select>
+        Admin key
+        <input type="password" id="adminKeyInput" placeholder="WEB_ADMIN_KEY" autocomplete="off" />
       </label>
-
-      <label>
-        API Base URL
-        <input type="url" id="cfgBase" placeholder="https://api.groq.com/openai/v1" required />
-      </label>
-
-      <label>
-        API Key
-        <input type="password" id="cfgKey" placeholder="gsk_... hoac sk-..." autocomplete="off" />
-      </label>
-
-      <label>
-        Model
-        <input type="text" id="cfgModel" placeholder="llama-3.3-70b-versatile" />
-      </label>
-
-      <label>
-        System prompt (tuy chon)
-        <textarea id="cfgSystem" rows="3" placeholder="Ban la Jarvis..."></textarea>
-      </label>
-
-      <label class="check">
-        <input type="checkbox" id="cfgStream" checked />
-        Stream tra loi (SSE)
-      </label>
-
       <footer class="modal-actions">
-        <button type="button" class="btn ghost" id="btnTest">Test ket noi</button>
-        <button type="button" class="btn primary" id="btnSaveSettings">Luu</button>
+        <button type="button" class="btn primary" id="btnAdminLogin">Dang nhap</button>
       </footer>
-      <p class="test-out" id="testOut" hidden></p>
+      <p class="test-out" id="adminLoginOut" hidden></p>
     </form>
   </dialog>
 
-  <script src="chat.js?v=5"></script>
+  <!-- Admin panel (after login) -->
+  <dialog class="modal" id="adminPanelModal">
+    <form method="dialog" class="modal-card">
+      <header>
+        <h2>Admin panel</h2>
+        <button type="submit" class="icon-btn" value="cancel" aria-label="Dong">X</button>
+      </header>
+      <p class="modal-note">API key AI nam trong <code>.env</code> server — khong hien cho user.</p>
+      <label>
+        Backend API URL (server Jarvis web)
+        <input type="url" id="adminApiBase" placeholder="http://127.0.0.1:7860" />
+      </label>
+      <label>
+        User access token (neu bat WEB_ACCESS_TOKEN)
+        <input type="password" id="adminUserToken" placeholder="de trong neu khong bat" autocomplete="off" />
+      </label>
+      <div class="admin-status" id="adminStatusBox">...</div>
+      <footer class="modal-actions">
+        <button type="button" class="btn ghost" id="btnAdminLogout">Dang xuat</button>
+        <button type="button" class="btn ghost" id="btnAdminTest">Test server</button>
+        <button type="button" class="btn primary" id="btnAdminSave">Luu</button>
+      </footer>
+      <p class="test-out" id="adminPanelOut" hidden></p>
+    </form>
+  </dialog>
+
+  <script src="chat.js?v=6"></script>
 </body>
 </html>

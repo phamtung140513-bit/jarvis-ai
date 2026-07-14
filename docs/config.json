@@ -1,0 +1,5 @@
+{
+  "apiBase": "http://127.0.0.1:7860",
+  "telegramBot": "https://t.me/grokapiai_bot",
+  "appName": "Jarvis AI"
+}

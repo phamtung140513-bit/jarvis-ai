@@ -1,10 +1,25 @@
 # Đổi “tên miền” web Jarvis
 
+## Miền đang dùng (chốt — dễ nhất)
+
+```text
+https://phamtung140513-bit.github.io/jarvis-ai/
+https://phamtung140513-bit.github.io/jarvis-ai/landing.html
+```
+
+Repo: https://github.com/phamtung140513-bit/jarvis-ai  
+(Org `jarvisai-tung` / transfer **không bắt buộc** — có thể bỏ qua.)
+
+---
+
+## (Tuỳ chọn) Đổi miền khác — chỉ khi thật sự cần
+
 Hiện tại web free là:
 
 ```text
 https://phamtung140513-bit.github.io/jarvis-ai/
 ```
+
 
 ## Quan trọng
 
@@ -13,39 +28,33 @@ Trên GitHub, tên **`jarvis-ai` đã bị người khác chiếm**
 
 ---
 
-## Cách 1 — Free: `jarvisai.github.io` (gần “jarvis-ai”)
+## Cách 1 — Free: `jarvisai-tung.github.io` (tên bạn đã chọn)
 
-Tên **`jarvisai`** đang trống (kiểm tra lúc setup).
+Org/user: **`jarvisai-tung`**
 
-### Bước A — Tạo Organization
+### Bước A — Đã tạo tên
 
-1. Mở: https://github.com/organizations/plan  
-2. Chọn plan **Free**  
-3. Organization name: **`jarvisai`**  
-4. Create  
+- Profile: https://github.com/jarvisai-tung  
 
 ### Bước B — Repo site gốc
 
-1. Trong org `jarvisai`, tạo repo tên **đúng**:  
-   **`jarvisai.github.io`**  
+1. Tạo repo tên **đúng**:  
+   **`jarvisai-tung.github.io`**  
    (public, không README)
 
-2. Trên máy (PowerShell):
+2. Trên máy: double-click `SETUP_JARVISAI_DOMAIN.cmd`  
+   hoặc PowerShell:
 
 ```powershell
 cd C:\Users\Admin\Jarvis-AI
 $env:Path = "C:\Program Files\Git\bin;C:\Program Files\GitHub CLI;" + $env:Path
 
-# remote mới (org site)
 git remote remove origin-org 2>$null
-git remote add origin-org https://github.com/jarvisai/jarvisai.github.io.git
-
-# đẩy docs lên root site: dùng branch main + Pages /docs
-# HOẶC copy nội dung docs lên root — cách đơn giản: Pages folder /docs
+git remote add origin-org https://github.com/jarvisai-tung/jarvisai-tung.github.io.git
 git push -u origin-org main
 ```
 
-3. Org repo → **Settings → Pages**  
+3. Repo → **Settings → Pages**  
    - Source: **Deploy from a branch**  
    - Branch: `main`  
    - Folder: **`/docs`**  
@@ -54,11 +63,9 @@ git push -u origin-org main
 4. URL free:
 
 ```text
-https://jarvisai.github.io/
-https://jarvisai.github.io/landing.html
+https://jarvisai-tung.github.io/
+https://jarvisai-tung.github.io/landing.html
 ```
-
-> Muốn tên khác free: `jarvis-ai-vn` → `https://jarvis-ai-vn.github.io/` (cùng quy trình).
 
 ---
 
