@@ -1,0 +1,25 @@
+.env
+.env.*
+!.env.example
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.env.local
+logs/*
+!logs/.gitkeep
+logs/*.log
+logs/*.jsonl
+cache/*
+!cache/.gitkeep
+workspace/*
+!workspace/.gitkeep
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.db
+.DS_Store
+# secrets / local
+*.pem
+credentials.json

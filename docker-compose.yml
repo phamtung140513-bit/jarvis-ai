@@ -1,0 +1,22 @@
+# Jarvis-AI local stack (Phase 1: bot only; Phase 5: + sandbox)
+services:
+  jarvis:
+    build: .
+    container_name: jarvis-ai
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - ./workspace:/app/workspace
+      - ./logs:/app/logs
+      - ./cache:/app/cache
+    # Telegram long-polling needs outbound HTTPS only
+    # For Docker sandbox (Phase 5), mount docker.sock carefully or use DinD
+
+  # Placeholder for future isolated runner
+  # sandbox:
+  #   image: python:3.12-slim
+  #   profiles: ["sandbox"]
+  #   working_dir: /work
+  #   volumes:
+  #     - ./workspace:/work:ro

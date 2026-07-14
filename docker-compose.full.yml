@@ -1,0 +1,40 @@
+# Bot + VietQR pay trên cùng VPS
+# Dùng: docker compose -f docker-compose.full.yml up -d --build
+#
+# Yêu cầu:
+#   - ./ .env          (Jarvis)
+#   - ../vietqr-pay/.env
+# Đặt 2 thư mục cạnh nhau:
+#   /opt/Jarvis-AI
+#   /opt/vietqr-pay
+
+services:
+  jarvis:
+    build: .
+    container_name: jarvis-ai
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      # Trong Docker network, gọi pay bằng tên service
+      VIETQR_PAY_URL: http://vietqr:3000
+      PAYMENT_WEBHOOK_HOST: 0.0.0.0
+      PAYMENT_WEBHOOK_PORT: "8787"
+    volumes:
+      - ./workspace:/app/workspace
+      - ./logs:/app/logs
+      - ./cache:/app/cache
+    depends_on:
+      - vietqr
+
+  vietqr:
+    build: ../vietqr-pay
+    container_name: vietqr-pay
+    restart: unless-stopped
+    env_file:
+      - ../vietqr-pay/.env
+    environment:
+      PORT: "3000"
+      JARVIS_FULFILL_URL: http://jarvis:8787/internal/orders/paid
+    ports:
+      - "3000:3000"

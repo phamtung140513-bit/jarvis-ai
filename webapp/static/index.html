@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Jarvis AI</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div class="app">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="logo">J</div>
+          <div>
+            <div class="brand-name" id="appName">Jarvis AI</div>
+            <div class="brand-sub" id="modelLabel">loading…</div>
+          </div>
+        </div>
+        <button type="button" class="btn primary" id="btnNew">＋ Hội thoại mới</button>
+        <a class="btn ghost" id="tgLink" href="https://t.me/grokapiai_bot" target="_blank" rel="noopener">
+          ✈️ Mở bot Telegram
+        </a>
+        <p class="sidebar-note">
+          Web + Telegram dùng <strong>cùng một AI</strong> (cùng key & model trong
+          <code>.env</code>).
+        </p>
+        <div class="sidebar-foot">
+          <label class="token-box" id="tokenBox" hidden>
+            Access token
+            <input type="password" id="accessToken" placeholder="WEB_ACCESS_TOKEN" autocomplete="off" />
+          </label>
+        </div>
+      </aside>
+
+      <main class="main">
+        <header class="topbar">
+          <h1 id="heading">Chat</h1>
+          <span class="pill" id="statusPill">● online</span>
+        </header>
+
+        <section class="messages" id="messages" aria-live="polite">
+          <div class="empty" id="emptyState">
+            <div class="empty-icon">✦</div>
+            <h2>Hỏi gì cũng được</h2>
+            <p>Giống Grok — chat nhanh, code, giải thích. Hoặc dùng bot Telegram cùng lúc.</p>
+            <div class="suggestions">
+              <button type="button" data-q="Giải thích Python async/await ngắn gọn">Python async</button>
+              <button type="button" data-q="Viết API FastAPI hello world">FastAPI hello</button>
+              <button type="button" data-q="So sánh bot Telegram và web chat AI">Telegram vs Web</button>
+            </div>
+          </div>
+        </section>
+
+        <form class="composer" id="form">
+          <textarea
+            id="input"
+            rows="1"
+            placeholder="Nhắn tin cho Jarvis…"
+            autocomplete="off"
+          ></textarea>
+          <button type="submit" id="btnSend" title="Gửi">↑</button>
+        </form>
+      </main>
+    </div>
+    <script src="/static/app.js"></script>
+  </body>
+</html>
