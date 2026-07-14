@@ -309,16 +309,51 @@ Không bịa API; nếu không chắc hãy nói rõ.`;
   function closePlusMenu() {
     if (!els.plusMenu) return;
     els.plusMenu.hidden = true;
+    els.plusMenu.style.display = "none";
     els.btnPlus?.classList.remove("open");
     els.btnPlus?.setAttribute("aria-expanded", "false");
   }
 
+  function positionPlusMenu() {
+    if (!els.plusMenu || !els.btnPlus) return;
+    // Mount on body so nothing clips it
+    if (els.plusMenu.parentElement !== document.body) {
+      document.body.appendChild(els.plusMenu);
+    }
+    const r = els.btnPlus.getBoundingClientRect();
+    const menuW = 240;
+    const pad = 8;
+    let left = r.left;
+    let bottom = window.innerHeight - r.top + pad;
+    if (left + menuW > window.innerWidth - 8) {
+      left = Math.max(8, window.innerWidth - menuW - 8);
+    }
+    els.plusMenu.style.left = left + "px";
+    els.plusMenu.style.bottom = bottom + "px";
+    els.plusMenu.style.top = "auto";
+    els.plusMenu.style.right = "auto";
+  }
+
+  function openPlusMenu() {
+    if (!els.plusMenu || !els.btnPlus) return;
+    positionPlusMenu();
+    els.plusMenu.hidden = false;
+    els.plusMenu.style.display = "block";
+    els.btnPlus.classList.add("open");
+    els.btnPlus.setAttribute("aria-expanded", "true");
+  }
+
   function togglePlusMenu() {
-    if (!els.plusMenu) return;
-    const open = els.plusMenu.hidden;
-    els.plusMenu.hidden = !open;
-    els.btnPlus?.classList.toggle("open", open);
-    els.btnPlus?.setAttribute("aria-expanded", open ? "true" : "false");
+    if (!els.plusMenu) {
+      // Fallback: no menu node → open file picker
+      els.fileImage?.click();
+      return;
+    }
+    if (els.plusMenu.hidden || els.plusMenu.style.display === "none") {
+      openPlusMenu();
+    } else {
+      closePlusMenu();
+    }
   }
 
   function clearPendingImages() {
@@ -660,24 +695,57 @@ Không bịa API; nếu không chắc hãy nói rõ.`;
     if (e.dataTransfer?.files?.length) addFiles(e.dataTransfer.files);
   });
 
-  // + menu: open options (image from device, …)
-  els.btnPlus?.addEventListener("click", (e) => {
+  // + menu (white plus): show "Ảnh từ máy"
+  function onPlusClick(e) {
+    e.preventDefault();
     e.stopPropagation();
     togglePlusMenu();
-  });
-  els.menuPickImage?.addEventListener("click", () => {
-    closePlusMenu();
-    els.fileImage?.click();
-  });
+  }
+  if (els.btnPlus) {
+    els.btnPlus.addEventListener("click", onPlusClick);
+    // Capture too — avoid parent handlers swallowing click
+    els.btnPlus.addEventListener("pointerup", (e) => {
+      // only primary button
+      if (e.button !== 0) return;
+    });
+  } else {
+    console.warn("btnPlus missing");
+  }
+
+  if (els.menuPickImage) {
+    els.menuPickImage.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      closePlusMenu();
+      // slight delay so file dialog is not blocked after menu close
+      setTimeout(() => els.fileImage?.click(), 50);
+    });
+  }
+
   els.fileImage?.addEventListener("change", () => {
     if (els.fileImage.files?.length) addFiles(els.fileImage.files);
     els.fileImage.value = "";
   });
-  document.addEventListener("click", (e) => {
-    if (!e.target.closest?.("#plusWrap")) closePlusMenu();
-  });
+
+  // Close menu when clicking outside (next tick so + click doesn't instantly close)
+  setTimeout(() => {
+    document.addEventListener(
+      "click",
+      (e) => {
+        const t = e.target;
+        if (!(t instanceof Element)) return;
+        if (t.closest("#plusWrap") || t.closest("#plusMenu") || t.closest("#btnPlus")) return;
+        closePlusMenu();
+      },
+      true
+    );
+  }, 0);
+
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") closePlusMenu();
+  });
+  window.addEventListener("resize", () => {
+    if (els.plusMenu && !els.plusMenu.hidden) positionPlusMenu();
   });
 
   els.btnNew.addEventListener("click", newChat);
