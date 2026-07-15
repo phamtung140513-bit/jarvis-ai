@@ -267,13 +267,13 @@
     const name = planDisplayName(user);
     const ai =
       user.ai_tier === "paid"
-        ? "GPT"
+        ? "DeepSeek VIP"
         : user.ai_label
           ? user.ai_tier === "free"
             ? "Groq"
             : ""
           : user.plan_id && user.plan_id !== "trial" && !user.plan_expired
-            ? "GPT"
+            ? "DeepSeek VIP"
             : "Groq";
     let base = "Gói " + name;
     if (ai) base += " · " + ai;
@@ -321,7 +321,7 @@
           (user.plan_id &&
             user.plan_id !== "trial" &&
             !user.plan_expired)
-            ? "Model: GPT (VIP)"
+            ? "Model: DeepSeek-V4-Pro (VIP)"
             : "Model: Groq (free)";
         metaFull = metaFull ? metaFull + " · " + aiBit : aiBit;
       }

@@ -11,6 +11,10 @@ from ai.prompts import build_system_prompt
 from ai.routing import ModelRoute, resolve_route
 from config import Settings, get_settings
 
+# Paid/VIP coding: lower temperature = fewer hallucinations, tighter code
+PAID_DEFAULT_TEMPERATURE = 0.2
+FREE_DEFAULT_TEMPERATURE = 0.35
+
 logger = logging.getLogger(__name__)
 
 
@@ -118,19 +122,27 @@ class GrokClient:
         max_tokens: int | None = None,
         stream: bool = False,
         model: str | None = None,
+        paid: bool = False,
     ) -> dict[str, Any]:
-        sys_content = build_system_prompt(system)
+        sys_content = build_system_prompt(system, paid=paid)
         full: list[dict[str, str]] = [{"role": "system", "content": sys_content}]
         full.extend(messages)
+        if temperature is not None:
+            temp = float(temperature)
+        elif paid:
+            temp = PAID_DEFAULT_TEMPERATURE
+        else:
+            try:
+                temp = min(float(self.settings.temperature), FREE_DEFAULT_TEMPERATURE)
+            except Exception:
+                temp = FREE_DEFAULT_TEMPERATURE
         return {
             "model": (model or self.active_model).strip(),
             "messages": full,
-            "temperature": temperature
-            if temperature is not None
-            else self.settings.temperature,
+            "temperature": temp,
             "max_tokens": max_tokens
             if max_tokens is not None
-            else self.settings.max_tokens,
+            else max(int(self.settings.max_tokens or 4096), 4096 if paid else 2048),
             "stream": stream,
         }
 
@@ -202,6 +214,7 @@ class GrokClient:
             client = self._client_for_route(route)
             model_id = model or route.model
 
+        is_paid = bool(route and route.tier == "paid")
         payload = self._build_payload(
             messages,
             system=system,
@@ -209,13 +222,15 @@ class GrokClient:
             max_tokens=max_tokens,
             stream=False,
             model=model_id,
+            paid=is_paid,
         )
         logger.info(
-            "LLM request tier=%s provider=%s model=%s msgs=%d",
+            "LLM request tier=%s provider=%s model=%s msgs=%d temp=%s",
             route.tier if route else "default",
             route.provider if route else self.settings.provider,
             payload["model"],
             len(payload["messages"]),
+            payload.get("temperature"),
         )
         try:
             resp = await client.post("/chat/completions", json=payload)
@@ -253,6 +268,7 @@ class GrokClient:
                 plan_id=plan_id, plan_expired=plan_expired, model=model
             )
 
+        is_paid = bool(route and route.tier == "paid")
         payload = self._build_payload(
             messages,
             system=system,
@@ -260,12 +276,14 @@ class GrokClient:
             max_tokens=max_tokens,
             stream=True,
             model=model_id,
+            paid=is_paid,
         )
         logger.info(
-            "LLM stream tier=%s provider=%s model=%s",
+            "LLM stream tier=%s provider=%s model=%s temp=%s",
             route.tier if route else "default",
             route.provider if route else self.settings.provider,
             payload["model"],
+            payload.get("temperature"),
         )
         try:
             async with client.stream("POST", "/chat/completions", json=payload) as resp:

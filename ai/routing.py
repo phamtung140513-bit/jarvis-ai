@@ -71,12 +71,12 @@ def resolve_route(
         provider = (settings.paid_ai_provider or "nvidia").strip().lower()
         model = (settings.paid_ai_model or "").strip()
         tier = "paid"
-        label = "GPT (gói trả phí)"
+        label = "DeepSeek-V4-Pro (VIP)"
     else:
         provider = (settings.free_ai_provider or "groq").strip().lower()
         model = (settings.free_ai_model or "").strip()
         tier = "free"
-        label = "Groq (gói free)"
+        label = "Groq (free / Trial)"
 
     if provider not in PROVIDER_DEFAULTS:
         provider = "groq" if tier == "free" else "nvidia"
@@ -100,7 +100,7 @@ def resolve_route(
             model=(settings.free_ai_model or fd["model"]).strip() or fd["model"],
             base_url=fd["base_url"].rstrip("/"),
             api_key=_key_for_provider(settings, free_p),
-            label="Groq (fallback — thiếu key GPT)",
+            label="Groq (fallback — thiếu key VIP)",
             tier="free",
         )
 
@@ -109,7 +109,7 @@ def resolve_route(
         model=model,
         base_url=base_url,
         api_key=api_key,
-        label=label if paid else "Groq (free / Trial)",
+        label=label,
         tier=tier,
     )
 

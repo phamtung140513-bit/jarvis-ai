@@ -28,11 +28,12 @@ PROVIDER_DEFAULTS: dict[str, dict[str, str]] = {
         "model": "grok-3-mini",
         "label": "xAI Grok",
     },
-    # NVIDIA NIM — OpenAI-compatible (build.nvidia.com / integrate.api.nvidia.com)
+    # NVIDIA NIM — OpenAI-compatible (build.nvidia.com)
+    # Default paid stack uses DeepSeek-V4-Pro (best coding among available key models)
     "nvidia": {
         "base_url": "https://integrate.api.nvidia.com/v1",
-        "model": "openai/gpt-oss-20b",
-        "label": "NVIDIA NIM (gpt-oss-20b)",
+        "model": "deepseek-ai/deepseek-v4-pro",
+        "label": "DeepSeek-V4-Pro (VIP coding)",
     },
     "ollama": {
         "base_url": "http://127.0.0.1:11434/v1",
@@ -112,7 +113,12 @@ class Settings(BaseSettings):
     free_ai_provider: str = Field("groq", alias="FREE_AI_PROVIDER")
     free_ai_model: str = Field("llama-3.3-70b-versatile", alias="FREE_AI_MODEL")
     paid_ai_provider: str = Field("nvidia", alias="PAID_AI_PROVIDER")
-    paid_ai_model: str = Field("openai/gpt-oss-20b", alias="PAID_AI_MODEL")
+    # Strongest coding model verified on this NVIDIA key (2026-07)
+    # Alts: openai/gpt-oss-120b · meta/llama-3.1-70b-instruct · nvidia/llama-3.3-nemotron-super-49b-v1.5
+    paid_ai_model: str = Field(
+        "deepseek-ai/deepseek-v4-pro",
+        alias="PAID_AI_MODEL",
+    )
 
     ai_temperature: float = Field(0.7, alias="AI_TEMPERATURE")
     ai_max_tokens: int = Field(4096, alias="AI_MAX_TOKENS")
