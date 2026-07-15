@@ -122,9 +122,9 @@
     if (!els.modelChip) return;
     if (!isLoggedIn()) {
       if (els.appNameLabel) els.appNameLabel.textContent = cfgPublic.appName || "TungDevAI";
-      els.modelChip.textContent = "Dang nhap";
+      els.modelChip.textContent = "Đăng nhập";
       els.modelChip.classList.add("login-cta");
-      if (els.userPillName) els.userPillName.textContent = "Dang nhap";
+      if (els.userPillName) els.userPillName.textContent = "Đăng nhập";
       if (els.userAvatar) els.userAvatar.src = "assets/bot-avatar.jpg";
       if (els.userPillImg) els.userPillImg.src = "assets/bot-avatar.jpg";
       return;
@@ -222,7 +222,7 @@
   function openAccountMenu(which) {
     closeAccountMenus();
     const email =
-      (googleUser && (googleUser.email || googleUser.name)) || "Tai khoan";
+      (googleUser && (googleUser.email || googleUser.name)) || "Tài khoản";
     if (which === "side" && els.accountMenu) {
       if (els.accountMenuEmail) els.accountMenuEmail.textContent = email;
       els.accountMenu.classList.remove("hidden");
@@ -374,7 +374,7 @@
       row.className = "hist-item" + (c.id === activeId ? " active" : "");
       row.innerHTML =
         '<span class="title"></span><button type="button" class="del" title="Xoa">X</button>';
-      row.querySelector(".title").textContent = c.title || "Chat moi";
+      row.querySelector(".title").textContent = c.title || "Chat mới";
       row.addEventListener("click", (e) => {
         if (e.target.closest(".del")) return;
         selectChat(c.id);
@@ -406,7 +406,7 @@
       '<span class="code-lang">' +
       langLabel +
       "</span>" +
-      '<button type="button" class="code-copy" title="Copy code">Copy</button>' +
+      '<button type="button" class="code-copy" title="Sao chép code">Sao chép</button>' +
       "</div>" +
       '<pre><code class="lang-' +
       langLabel +
@@ -466,10 +466,10 @@
   function copyCodeText(text, btn) {
     const done = function (ok) {
       if (!btn) return;
-      btn.textContent = ok ? "Copied!" : "Loi";
+      btn.textContent = ok ? "Đã sao chép!" : "Lỗi";
       btn.classList.toggle("copied", !!ok);
       setTimeout(function () {
-        btn.textContent = "Copy";
+        btn.textContent = "Sao chép";
         btn.classList.remove("copied");
       }, 1600);
     };
@@ -511,7 +511,7 @@
       bar.className = "code-block-bar";
       bar.innerHTML =
         '<span class="code-lang">code</span>' +
-        '<button type="button" class="code-copy" title="Copy code">Copy</button>';
+        '<button type="button" class="code-copy" title="Sao chép code">Sao chép</button>';
       pre.parentNode.insertBefore(wrap, pre);
       wrap.appendChild(bar);
       wrap.appendChild(pre);
@@ -552,7 +552,7 @@
     body.className = "body";
     const roleEl = document.createElement("div");
     roleEl.className = "role";
-    roleEl.textContent = role === "user" ? "Ban" : "TungDevAI";
+    roleEl.textContent = role === "user" ? "Bạn" : "TungDevAI";
     body.appendChild(roleEl);
     if (images.length) {
       const wrap = document.createElement("div");
@@ -584,7 +584,7 @@
   function newChat() {
     const c = {
       id: uid(),
-      title: "Chat moi",
+      title: "Chat mới",
       messages: [],
       updated: Date.now(),
       sessionId: "",
@@ -729,7 +729,7 @@
 
     const chat = ensureChat();
     chat.messages.push({ role: "user", content: text, images: images });
-    if (chat.title === "Chat moi") {
+    if (chat.title === "Chat mới") {
       const t = text || "Anh";
       chat.title = t.slice(0, 40) + (t.length > 40 ? "..." : "");
     }
@@ -821,7 +821,7 @@
       contentEl.parentElement.parentElement.classList.remove("typing");
       setAssistantHtml(
         contentEl,
-        "**Loi ket noi server**\n\n" +
+        "**Lỗi kết nối server**\n\n" +
           String(err.message || err) +
           "\n\nChu y:\n" +
           "1. Chay server: `python -m webapp.server` (port 7860)\n" +

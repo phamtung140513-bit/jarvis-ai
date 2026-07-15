@@ -103,7 +103,7 @@ const TungAuth = (() => {
 
   async function exchangeGoogleCredential(credential) {
     if (!credential) throw new Error("Thieu credential Google");
-    setHint("Dang xac thuc Google voi server...");
+    setHint("Đang xác thực Google với server...");
     const r = await fetch(apiBase() + "/api/auth/google", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -143,7 +143,7 @@ const TungAuth = (() => {
       return;
     }
     clearMsgs();
-    setHint("Dang mo cua so Google...");
+    setHint("Đang mở cửa sổ Google...");
 
     const redirectUri = location.origin.replace(/\/$/, "") + "/google-callback.html";
     const nonce = randomNonce();
@@ -184,7 +184,7 @@ const TungAuth = (() => {
       if (popup.closed) {
         clearInterval(popupWatch);
         popupWatch = null;
-        if ($("authHint") && $("authHint").textContent.indexOf("Dang mo") === 0) {
+        if ($("authHint") && $("authHint").textContent.indexOf("Đang mở") === 0) {
           setHint("Cua so Google da dong. Bam lai neu chua xong.");
         }
       }
@@ -226,13 +226,13 @@ const TungAuth = (() => {
 
     if (!clientId) {
       wrap.innerHTML =
-        '<p class="auth-hint" style="margin:0">Google chua cau hinh. Dung email ben tren.</p>';
+        '<p class="auth-hint" style="margin:0">Google chưa cấu hình. Dùng email bên trên.</p>';
       return;
     }
 
     if (typeof google === "undefined" || !google.accounts || !google.accounts.id) {
       wrap.innerHTML =
-        '<p class="auth-hint" style="margin:0">Dang tai Google…</p>';
+        '<p class="auth-hint" style="margin:0">Đang tải Google…</p>';
       setTimeout(renderGoogleButton, 400);
       return;
     }
@@ -259,7 +259,7 @@ const TungAuth = (() => {
     } catch (e) {
       console.warn("GIS render failed", e);
       wrap.innerHTML =
-        '<p class="auth-hint" style="margin:0">Khong ve duoc nut Google. Thu email/mat khau.</p>';
+        '<p class="auth-hint" style="margin:0">Không vẽ được nút Google. Thử email/mật khẩu.</p>';
     }
   }
 
@@ -269,11 +269,11 @@ const TungAuth = (() => {
     const email = (($("loginEmail") && $("loginEmail").value) || "").trim();
     const password = ($("loginPassword") && $("loginPassword").value) || "";
     if (!email || !password) {
-      showErr("Nhap email va mat khau");
+      showErr("Nhập email và mật khẩu");
       return;
     }
     try {
-      setHint("Dang dang nhap...");
+      setHint("Đang đăng nhập...");
       const r = await fetch(apiBase() + "/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -293,7 +293,7 @@ const TungAuth = (() => {
     const email = (($("regEmail") && $("regEmail").value) || "").trim();
     const btn = $("btnSendCode");
     if (!email) {
-      showErr("Nhap email de nhan ma");
+      showErr("Nhập email để nhận mã");
       return;
     }
     if (btn) btn.disabled = true;
@@ -304,24 +304,24 @@ const TungAuth = (() => {
         body: JSON.stringify({ email, purpose: "register" }),
       });
       const data = await parseJsonResponse(r);
-      let msg = data.message || "Da gui ma xac thuc.";
+      let msg = data.message || "Đã gửi mã xác thực.";
       if (data.dev_code) {
-        msg = "Ma xac thuc (dev): " + data.dev_code + " — nhap vao o Ma xac thuc.";
+        msg = "Mã xác thực (dev): " + data.dev_code + " — nhập vào ô Mã xác thực.";
         if ($("regCode")) $("regCode").value = data.dev_code;
       }
       showOk(msg);
       if ($("codeHint")) {
-        $("codeHint").textContent = data.sent ? "Kiem tra hop thu (va spam)." : "";
+        $("codeHint").textContent = data.sent ? "Kiểm tra hộp thư (và spam)." : "";
       }
       sendCodeCooldown = 45;
       const tick = function () {
         if (!btn) return;
         if (sendCodeCooldown <= 0) {
           btn.disabled = false;
-          btn.textContent = "Gui ma";
+          btn.textContent = "Gửi mã";
           return;
         }
-        btn.textContent = "Gui lai (" + sendCodeCooldown + "s)";
+        btn.textContent = "Gửi lại (" + sendCodeCooldown + "s)";
         sendCodeCooldown -= 1;
         setTimeout(tick, 1000);
       };
@@ -329,7 +329,7 @@ const TungAuth = (() => {
     } catch (e) {
       if (btn) {
         btn.disabled = false;
-        btn.textContent = "Gui ma";
+        btn.textContent = "Gửi mã";
       }
       showErr(e.message || e);
     }
@@ -343,19 +343,19 @@ const TungAuth = (() => {
     const code = (($("regCode") && $("regCode").value) || "").trim();
     const name = (($("regName") && $("regName").value) || "").trim();
     if (!email || !password) {
-      showErr("Nhap email va mat khau");
+      showErr("Nhập email và mật khẩu");
       return;
     }
     if (password.length < 6) {
-      showErr("Mat khau toi thieu 6 ky tu");
+      showErr("Mật khẩu tối thiểu 6 ký tự");
       return;
     }
     if (!code) {
-      showErr("Bam Gui ma roi nhap ma 6 so tu email");
+      showErr("Bấm Gửi mã rồi nhập mã 6 số từ email");
       return;
     }
     try {
-      setHint("Dang tao tai khoan...");
+      setHint("Đang tạo tài khoản...");
       const r = await fetch(apiBase() + "/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>TungDevAI - Chat</title>
-  <meta name="description" content="TungDevAI coding chat - Dang nhap email hoac Google" />
+  <meta name="description" content="TungDevAI coding chat - Đăng nhập email hoặc Google" />
   <meta name="theme-color" content="#212121" />
   <script>
     (function () {
@@ -18,37 +18,35 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="chat.css?v=22" />
+  <link rel="stylesheet" href="chat.css?v=24" />
 </head>
 <body>
-  <!-- Chat app — login/register are separate pages -->
   <div class="app" id="app">
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-top">
-        <button type="button" class="btn new-chat" id="btnNew" title="Chat moi">
-          <span class="ico">+</span> Chat moi
+        <button type="button" class="btn new-chat" id="btnNew" title="Chat mới">
+          <span class="ico">+</span> Chat mới
         </button>
-        <button type="button" class="icon-btn mobile-only" id="btnCloseSidebar" aria-label="Dong">X</button>
+        <button type="button" class="icon-btn mobile-only" id="btnCloseSidebar" aria-label="Đóng">X</button>
       </div>
 
-      <div class="history" id="history" aria-label="Lich su"></div>
+      <div class="history" id="history" aria-label="Lịch sử"></div>
 
       <div class="sidebar-bottom">
-        <a class="side-link" href="./">Trang gioi thieu</a>
+        <a class="side-link" href="./">Trang giới thiệu</a>
         <a class="side-link" id="tgLink" href="https://t.me/grokapiai_bot" target="_blank" rel="noopener">Bot Telegram</a>
-        <!-- Bam vao tai khoan → menu (co Dang xuat). Khong co nut Dang xuat ben ngoai. -->
         <div class="account-wrap" id="accountWrap">
-          <button type="button" class="user-chip as-btn" id="userChipBtn" title="Tai khoan" aria-haspopup="menu" aria-expanded="false">
+          <button type="button" class="user-chip as-btn" id="userChipBtn" title="Tài khoản" aria-haspopup="menu" aria-expanded="false">
             <img src="assets/bot-avatar.jpg" alt="" width="28" height="28" id="userAvatar" />
             <div class="user-chip-text">
               <div class="user-name" id="appNameLabel">TungDevAI</div>
-              <div class="user-sub" id="modelChip">Dang nhap</div>
+              <div class="user-sub" id="modelChip">Đăng nhập</div>
             </div>
           </button>
           <div class="account-menu hidden" id="accountMenu" role="menu">
             <div class="account-menu-email" id="accountMenuEmail"></div>
-            <a class="account-menu-item account-menu-vip" href="pricing.html" role="menuitem">Mua goi VIP</a>
-            <button type="button" class="account-menu-item" id="btnLogout" role="menuitem">Dang xuat</button>
+            <a class="account-menu-item account-menu-vip" href="pricing.html" role="menuitem">Mua gói VIP</a>
+            <button type="button" class="account-menu-item" id="btnLogout" role="menuitem">Đăng xuất</button>
           </div>
         </div>
       </div>
@@ -61,17 +59,17 @@
         <button type="button" class="icon-btn mobile-only" id="btnOpenSidebar" aria-label="Menu">=</button>
         <div class="topbar-title">
           <span id="chatTitle">TungDevAI</span>
-          <span class="dot" id="statusDot" title="Trang thai"></span>
+          <span class="dot" id="statusDot" title="Trạng thái"></span>
         </div>
         <div class="account-wrap topbar-account" id="accountWrapTop">
-          <button type="button" class="user-pill as-btn" id="userPill" title="Tai khoan" aria-haspopup="menu" aria-expanded="false">
+          <button type="button" class="user-pill as-btn" id="userPill" title="Tài khoản" aria-haspopup="menu" aria-expanded="false">
             <img id="userPillImg" alt="" width="24" height="24" src="assets/bot-avatar.jpg" />
-            <span id="userPillName">Dang nhap</span>
+            <span id="userPillName">Đăng nhập</span>
           </button>
           <div class="account-menu account-menu-top hidden" id="accountMenuTop" role="menu">
             <div class="account-menu-email" id="accountMenuEmailTop"></div>
-            <a class="account-menu-item account-menu-vip" href="pricing.html" role="menuitem">Mua goi VIP</a>
-            <button type="button" class="account-menu-item" id="btnLogoutTop" role="menuitem">Dang xuat</button>
+            <a class="account-menu-item account-menu-vip" href="pricing.html" role="menuitem">Mua gói VIP</a>
+            <button type="button" class="account-menu-item" id="btnLogoutTop" role="menuitem">Đăng xuất</button>
           </div>
         </div>
       </header>
@@ -80,12 +78,12 @@
         <div class="welcome" id="welcome">
           <img class="welcome-avatar" src="assets/bot-avatar.jpg" alt="TungDevAI" />
           <h1>TungDevAI</h1>
-          <p>Senior coding assistant. Xin chao <strong id="welcomeName">ban</strong>!</p>
+          <p>Senior coding assistant. Xin chào <strong id="welcomeName">bạn</strong>!</p>
           <div class="suggestions">
-            <button type="button" data-q="Viet API FastAPI CRUD user (SQLAlchemy + Pydantic), co error handling">FastAPI CRUD</button>
-            <button type="button" data-q="Review code Python ve bug va security (toi se paste code)">Code review</button>
-            <button type="button" data-q="Giai thich traceback va dua patch (toi se paste log)">Debug</button>
-            <button type="button" data-q="Thiet ke kien truc bot Telegram SaaS multi-user">Kien truc bot</button>
+            <button type="button" data-q="Viết API FastAPI CRUD user (SQLAlchemy + Pydantic), có error handling">FastAPI CRUD</button>
+            <button type="button" data-q="Review code Python về bug và security (tôi sẽ paste code)">Code review</button>
+            <button type="button" data-q="Giải thích traceback và đưa patch (tôi sẽ paste log)">Debug</button>
+            <button type="button" data-q="Thiết kế kiến trúc bot Telegram SaaS multi-user">Kiến trúc bot</button>
           </div>
         </div>
       </section>
@@ -95,20 +93,19 @@
         <form class="composer" id="form">
           <input type="file" id="fileImage" accept="image/*" multiple hidden />
           <div class="plus-wrap" id="plusWrap">
-            <button type="button" class="plus-btn" id="btnPlus" title="Anh tu may" aria-label="Them anh">
+            <button type="button" class="plus-btn" id="btnPlus" title="Ảnh từ máy" aria-label="Thêm ảnh">
               <span class="plus-glyph">+</span>
             </button>
           </div>
-          <textarea id="input" rows="1" placeholder="Nhan tin cho TungDevAI..." autocomplete="off" enterkeyhint="send"></textarea>
-          <button type="submit" id="btnSend" aria-label="Gui" title="Gui">
+          <textarea id="input" rows="1" placeholder="Nhắn tin cho TungDevAI..." autocomplete="off" enterkeyhint="send"></textarea>
+          <button type="submit" id="btnSend" aria-label="Gửi" title="Gửi">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
           </button>
         </form>
-
       </div>
     </main>
   </div>
 
-  <script src="chat.js?v=22"></script>
+  <script src="chat.js?v=24"></script>
 </body>
 </html>

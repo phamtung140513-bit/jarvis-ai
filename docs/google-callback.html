@@ -17,12 +17,12 @@
   </style>
 </head>
 <body>
-  <p id="msg">Dang xu ly dang nhap Google…</p>
+  <p id="msg">Đang xử lý đăng nhập Google…</p>
   <script>
     (function () {
       const msg = document.getElementById("msg");
       function fail(t) {
-        msg.textContent = t || "Loi dang nhap Google";
+        msg.textContent = t || "Lỗi đăng nhập Google";
         try {
           if (window.opener) {
             window.opener.postMessage(
@@ -50,7 +50,7 @@
           const qs = new URLSearchParams(location.search);
           const t2 = qs.get("id_token");
           if (!t2) {
-            fail("Khong nhan duoc id_token tu Google. Kiem tra Redirect URI trong Google Cloud.");
+            fail("Không nhận được id_token từ Google. Kiểm tra Redirect URI trong Google Cloud.");
             return;
           }
           finish(t2);
@@ -62,14 +62,14 @@
       }
       function finish(token) {
         if (!window.opener) {
-          msg.textContent = "Mo lai trang login roi thu lai.";
+          msg.textContent = "Mở lại trang đăng nhập rồi thử lại.";
           return;
         }
         window.opener.postMessage(
           { type: "tungdevai-google-auth", credential: token },
           location.origin
         );
-        msg.textContent = "Thanh cong — dang dong…";
+        msg.textContent = "Thành công — đang đóng…";
         setTimeout(function () {
           try { window.close(); } catch (e) {}
         }, 400);
