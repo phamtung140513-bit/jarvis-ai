@@ -66,6 +66,11 @@ from product.web_plans import (  # noqa: E402
     set_web_user_plan,
     user_public,
 )
+from product.vietqr_client import (  # noqa: E402
+    create_pay_order,
+    get_order_status,
+    vietqr_pay_enabled,
+)
 from database.models import GoogleWebUser  # noqa: E402
 from sqlalchemy import select  # noqa: E402
 
@@ -120,6 +125,10 @@ class WebSetPlanBody(BaseModel):
     user_id: int | None = Field(default=None)
     plan: str = Field(default="basic")
     days: int | None = Field(default=None)
+
+
+class WebBuyBody(BaseModel):
+    plan: str = Field(default="basic")
 
 
 class GoogleLoginBody(BaseModel):
@@ -406,6 +415,15 @@ def create_app() -> FastAPI:
         p = _docs_file("pricing.css")
         return _file_nocache(p, "text/css") if p else HTMLResponse("x", status_code=404)
 
+    @app.get("/pricing-billing.js", response_model=None)
+    async def pricing_billing_js():
+        p = _docs_file("pricing-billing.js")
+        return (
+            _file_nocache(p, "application/javascript")
+            if p
+            else HTMLResponse("x", status_code=404)
+        )
+
     @app.get("/login.html", response_model=None)
     async def login_page():
         p = _docs_file("login.html")
@@ -657,6 +675,112 @@ def create_app() -> FastAPI:
             user_sessions[x_user_session] = guser
             return {"ok": True, "user": pub}
         return {"ok": True, "user": guser}
+
+    @app.post("/api/billing/create-order")
+    async def billing_create_order(
+        body: WebBuyBody,
+        x_user_session: str | None = Header(default=None, alias="X-User-Session"),
+    ) -> dict[str, Any]:
+        """Logged-in web user creates VietQR order (autobank → auto activate)."""
+        if not x_user_session or x_user_session not in user_sessions:
+            raise HTTPException(401, "Cần đăng nhập trước khi mua gói")
+        if not vietqr_pay_enabled(settings):
+            raise HTTPException(
+                503,
+                "Chưa bật autobank. Set VIETQR_PAY_URL + chạy vietqr-pay (port 3000).",
+            )
+        guser = user_sessions[x_user_session]
+        db_user = await _load_web_user(guser)
+        if db_user is None:
+            raise HTTPException(401, "Phiên đăng nhập không hợp lệ")
+
+        plan_id = (body.plan or "basic").lower().strip()
+        if plan_id not in PLANS or plan_id in ("owner", "trial"):
+            raise HTTPException(400, "Gói không hợp lệ (basic/pro/business)")
+        plan = get_plan(plan_id)
+        amount = int(plan.price_vnd or 0)
+        if amount <= 0:
+            raise HTTPException(400, "Gói này không bán (giá 0)")
+
+        try:
+            order = await create_pay_order(
+                settings,
+                amount=amount,
+                plan=plan.id,
+                web_user_id=int(db_user.id),
+                web_email=(db_user.email or "").strip().lower() or None,
+                note=f"web:{db_user.email}:{plan.id}",
+            )
+        except Exception as exc:
+            logger.exception("create web pay order failed")
+            raise HTTPException(502, f"Không tạo được QR: {exc}") from exc
+
+        return {
+            "ok": True,
+            "orderId": order.order_id,
+            "plan": plan.id,
+            "plan_name": plan.name,
+            "amount": order.amount,
+            "content": order.content,
+            "status": order.status,
+            "qrImageUrl": order.qr_image_url,
+            "payPage": order.pay_page,
+            "bank": {
+                "code": order.bank_code,
+                "account": order.bank_account,
+                "name": order.bank_name,
+            },
+            "hint": "Chuyển khoản đúng số tiền + nội dung. Hệ thống auto kích hoạt khi nhận CK.",
+        }
+
+    @app.get("/api/billing/order-status")
+    async def billing_order_status(
+        order_id: str = "",
+        x_user_session: str | None = Header(default=None, alias="X-User-Session"),
+    ) -> dict[str, Any]:
+        if not x_user_session or x_user_session not in user_sessions:
+            raise HTTPException(401, "Cần đăng nhập")
+        oid = (order_id or "").strip()
+        if not oid:
+            raise HTTPException(400, "Thiếu order_id")
+        if not vietqr_pay_enabled(settings):
+            raise HTTPException(503, "VIETQR_PAY_URL chưa cấu hình")
+        try:
+            data = await get_order_status(settings, oid)
+        except Exception as exc:
+            raise HTTPException(502, str(exc)) from exc
+
+        # When paid, refresh session plan from DB
+        if str(data.get("status") or "").lower() == "paid":
+            guser = user_sessions.get(x_user_session or "")
+            db_user = await _load_web_user(guser)
+            if db_user is not None:
+                pub = user_public(db_user)
+                if guser is not None:
+                    guser.update(pub)
+                    user_sessions[x_user_session] = guser  # type: ignore[index]
+                data["user"] = pub
+        return {"ok": True, **data}
+
+    @app.get("/api/billing/config")
+    async def billing_config() -> dict[str, Any]:
+        return {
+            "ok": True,
+            "autobank": vietqr_pay_enabled(settings),
+            "vietqr_pay_url": (settings.vietqr_pay_url or "").rstrip("/"),
+            "currency": settings.currency,
+            "plans": [
+                {
+                    "id": p.id,
+                    "name": p.name,
+                    "price_vnd": p.price_vnd,
+                    "daily_messages": p.daily_messages,
+                    "days": p.days,
+                }
+                for p in PLANS.values()
+                if p.id not in ("owner", "trial")
+            ],
+        }
 
     @app.post("/api/auth/activate")
     async def auth_activate(

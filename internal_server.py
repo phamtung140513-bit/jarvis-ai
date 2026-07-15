@@ -55,12 +55,25 @@ def create_app(bot: Bot, settings: Settings) -> web.Application:
                     {"ok": False, "error": "invalid_telegram_id"}, status=400
                 )
 
+        raw_wu = body.get("webUserId") or body.get("web_user_id")
+        web_user_id: int | None = None
+        if raw_wu is not None and str(raw_wu).strip():
+            try:
+                web_user_id = int(str(raw_wu).strip())
+            except ValueError:
+                return web.json_response(
+                    {"ok": False, "error": "invalid_web_user_id"}, status=400
+                )
+        web_email = str(body.get("webEmail") or body.get("web_email") or "").strip() or None
+
         logger.info(
-            "Webhook paid order=%s plan=%s amount=%s tg=%s",
+            "Webhook paid order=%s plan=%s amount=%s tg=%s web=%s/%s",
             order_id,
             plan,
             amount,
             telegram_id,
+            web_user_id,
+            web_email,
         )
 
         result = await fulfill_paid_order(
@@ -70,6 +83,8 @@ def create_app(bot: Bot, settings: Settings) -> web.Application:
             plan_id=plan,
             amount=amount,
             telegram_id=telegram_id,
+            web_user_id=web_user_id,
+            web_email=web_email,
             note=note,
         )
         status = 200 if result.get("ok") else 400

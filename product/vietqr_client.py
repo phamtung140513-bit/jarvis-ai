@@ -47,19 +47,38 @@ async def create_pay_order(
     *,
     amount: int,
     plan: str,
-    telegram_id: int,
+    telegram_id: int | None = None,
+    web_user_id: int | None = None,
+    web_email: str | None = None,
     note: str = "",
     content: str | None = None,
 ) -> PayOrder:
+    """Create QR order for Telegram and/or Web customer."""
     base = settings.vietqr_pay_url.rstrip("/")
-    transfer = (content or make_user_transfer_content(telegram_id)).strip()
-    payload = {
+    if content:
+        transfer = content.strip()
+    elif telegram_id:
+        transfer = make_user_transfer_content(int(telegram_id))
+    else:
+        transfer = ""  # server generates AIW{webUserId}...
+    payload: dict[str, Any] = {
         "amount": int(amount),
         "plan": plan,
-        "telegramId": str(telegram_id),
-        "note": note or f"tg:{telegram_id}:{plan}",
-        "content": transfer,
+        "note": note
+        or (
+            f"tg:{telegram_id}:{plan}"
+            if telegram_id
+            else f"web:{web_email or web_user_id}:{plan}"
+        ),
     }
+    if transfer:
+        payload["content"] = transfer
+    if telegram_id is not None:
+        payload["telegramId"] = str(telegram_id)
+    if web_user_id is not None:
+        payload["webUserId"] = int(web_user_id)
+    if web_email:
+        payload["webEmail"] = str(web_email).strip().lower()
     async with httpx.AsyncClient(timeout=30.0) as client:
         res = await client.post(f"{base}/api/orders", json=payload)
         data = res.json() if res.content else {}

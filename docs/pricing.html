@@ -46,12 +46,15 @@
     <section class="p-steps" aria-label="Cach mua">
       <h2 class="p-steps-title">Cách mua trong 4 bước</h2>
       <ol class="p-steps-list">
-        <li><strong>Đăng ký web</strong> — <a href="./register.html">register.html</a> (Trial free 3 ngày)</li>
-        <li><strong>Mở bot</strong> — <a href="https://t.me/grokapiai_bot" target="_blank" rel="noopener">@grokapiai_bot</a> → <code>/buy</code> hoặc <code>/qr basic</code></li>
-        <li><strong>Chuyển khoản / quét QR</strong> — gửi bill cho admin nếu cần</li>
-        <li><strong>Kích hoạt</strong> — bot: <code>/activate MÃ</code> · web chat: gõ <code>/activate MÃ</code></li>
+        <li><strong>Đăng nhập web</strong> — <a href="./login.html">login</a> / <a href="./register.html">đăng ký</a></li>
+        <li><strong>Bấm Mua gói</strong> trên thẻ Basic/Pro/Business → hiện QR VietQR</li>
+        <li><strong>Chuyển khoản</strong> đúng số tiền + nội dung CK (autobank nhận tự động)</li>
+        <li><strong>Auto kích hoạt</strong> gói web + (nếu mua từ bot) gói Telegram</li>
       </ol>
-      <p class="p-steps-note">Support: <a href="https://t.me/usertungpham" target="_blank" rel="noopener">@usertungpham</a></p>
+      <p class="p-steps-note">
+        Bot Telegram: <a href="https://t.me/grokapiai_bot" target="_blank" rel="noopener">@grokapiai_bot</a> · <code>/buy</code>
+        · Support: <a href="https://t.me/usertungpham" target="_blank" rel="noopener">@usertungpham</a>
+      </p>
     </section>
 
     <!-- Cá nhân -->
@@ -74,7 +77,7 @@
         <h2>Basic</h2>
         <p class="p-price"><span class="num">49.000</span><span class="unit">đ<span>/tháng</span></span></p>
         <p class="p-desc">Cá nhân — code hàng ngày + GPT</p>
-        <a class="p-cta p-cta-muted" href="https://t.me/grokapiai_bot" target="_blank" rel="noopener">Mua Basic</a>
+        <button type="button" class="p-cta p-cta-muted js-buy" data-plan="basic">Mua Basic (QR auto)</button>
         <ul class="p-feats">
           <li><span class="ico">💬</span> 100 tin nhắn / ngày</li>
           <li><span class="ico">🤖</span> Model <strong>GPT</strong> (gpt-oss-120B)</li>
@@ -89,7 +92,7 @@
         <h2>Pro</h2>
         <p class="p-price"><span class="num">99.000</span><span class="unit">đ<span>/tháng</span></span></p>
         <p class="p-desc">Freelancer — DeepSeek Pro + quota cao + agent</p>
-        <a class="p-cta p-cta-primary" href="https://t.me/grokapiai_bot" target="_blank" rel="noopener">Mua Pro</a>
+        <button type="button" class="p-cta p-cta-primary js-buy" data-plan="pro">Mua Pro (QR auto)</button>
         <ul class="p-feats">
           <li><span class="ico">⚡</span> 500 tin nhắn / ngày</li>
           <li><span class="ico">🤖</span> Model <strong>DeepSeek-V4-Pro</strong> (mạnh nhất)</li>
@@ -104,7 +107,7 @@
         <h2>Business</h2>
         <p class="p-price"><span class="num">199.000</span><span class="unit">đ<span>/tháng</span></span></p>
         <p class="p-desc">Không giới hạn tin — GPT cho team</p>
-        <a class="p-cta p-cta-primary" href="https://t.me/grokapiai_bot" target="_blank" rel="noopener">Mua Business</a>
+        <button type="button" class="p-cta p-cta-primary js-buy" data-plan="business">Mua Business (QR auto)</button>
         <ul class="p-feats">
           <li><span class="ico">∞</span> Không giới hạn tin / ngày</li>
           <li><span class="ico">🤖</span> Model <strong>VIP</strong> DeepSeek-V4-Pro</li>
@@ -150,15 +153,16 @@
       <div class="p-faq-grid">
         <div>
           <h3>Thanh toán thế nào?</h3>
-          <p>Mở bot Telegram → <code>/buy</code> hoặc <code>/qr basic|pro|business</code> → CK/QR. Admin gửi mã (hoặc auto VietQR).</p>
+          <p><strong>Web:</strong> bấm Mua gói → quét QR → autobank nhận CK → auto lên gói.<br/>
+          <strong>Bot:</strong> <code>/buy</code> hoặc <code>/qr basic</code> → cùng luồng auto.</p>
         </div>
         <div>
           <h3>Web chat có cần gói không?</h3>
-          <p>Có. Đăng ký nhận <strong>Trial</strong> (20 tin/ngày, 3 ngày). Hết quota/hạn → mua gói và <code>/activate MÃ</code> trên web chat.</p>
+          <p>Có. Đăng ký nhận <strong>Trial</strong> (Groq). Nâng Basic = GPT · Pro = DeepSeek. Hết hạn/quota → mua lại.</p>
         </div>
         <div>
-          <h3>Mã kích hoạt dùng ở đâu?</h3>
-          <p>Bot: <code>/activate JV-XXXXX</code>. Web: trong ô chat gõ <code>/activate JV-XXXXX</code> (đã đăng nhập).</p>
+          <h3>CK xong bao lâu lên gói?</h3>
+          <p>Autobank (VietQR BĐSD / partner) → vài giây–vài phút. Nếu chậm: gõ <code>/activate MÃ</code> hoặc nhắn support.</p>
         </div>
         <div>
           <h3>Đổi gói / gia hạn?</h3>
@@ -183,6 +187,27 @@
     <p class="fine">Support: @usertungpham</p>
   </footer>
 
+  <!-- Modal QR autobank -->
+  <div class="pay-modal hidden" id="payModal" role="dialog" aria-modal="true">
+    <div class="pay-modal-card">
+      <button type="button" class="pay-close" id="payClose" aria-label="Đóng">×</button>
+      <h2 id="payTitle">Thanh toán</h2>
+      <p class="pay-sub" id="paySub">Quét QR · chuyển khoản đúng nội dung</p>
+      <div class="pay-qr-wrap">
+        <img id="payQr" alt="VietQR" width="240" height="240" />
+      </div>
+      <div class="pay-meta">
+        <div><span>Số tiền</span><strong id="payAmount">—</strong></div>
+        <div><span>Nội dung CK</span><strong id="payContent">—</strong></div>
+        <div><span>Mã đơn</span><code id="payOrderId">—</code></div>
+        <div><span>Trạng thái</span><strong id="payStatus">Đang chờ…</strong></div>
+      </div>
+      <p class="pay-hint" id="payHint">Giữ trang này mở. Autobank nhận CK → auto kích hoạt gói.</p>
+      <a class="p-cta p-cta-muted" id="payOpenPage" href="#" target="_blank" rel="noopener">Mở trang thanh toán</a>
+      <a class="p-cta p-cta-primary hidden" id="payGoChat" href="./chat.html">Vào chat ngay</a>
+    </div>
+  </div>
+
   <script>
     (function () {
       var personal = document.getElementById("gridPersonal");
@@ -200,5 +225,6 @@
       tabB.addEventListener("click", function () { show("biz"); });
     })();
   </script>
+  <script src="pricing-billing.js?v=1"></script>
 </body>
 </html>

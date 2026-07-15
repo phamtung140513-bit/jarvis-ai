@@ -175,7 +175,14 @@ async def set_web_user_plan(
     user.plan_id = plan.id
     user.active = True
     d = days if days is not None else plan.days
-    user.plan_expires_at = now + timedelta(days=int(d))
+    try:
+        d_int = int(d)
+    except (TypeError, ValueError):
+        d_int = int(plan.days or 30)
+    # datetime max ~ year 9999; cap to avoid OverflowError (e.g. owner 36500 days ok,
+    # but bad client input like 999999999 must not crash)
+    d_int = max(1, min(d_int, 3650))  # max ~10 years
+    user.plan_expires_at = now + timedelta(days=d_int)
     await session.commit()
     await session.refresh(user)
     return user

@@ -1,4 +1,4 @@
-"""Fulfill paid orders from vietqr-pay: activate plan + notify Telegram."""
+"""Fulfill paid orders from vietqr-pay: activate plan + notify Telegram/web."""
 
 from __future__ import annotations
 
@@ -14,6 +14,7 @@ from database.sqlite import get_db
 from product.access_codes import create_access_code
 from product.plans import get_plan
 from product.users import set_user_plan
+from product.web_plans import set_web_user_plan, user_public
 
 logger = logging.getLogger(__name__)
 
@@ -59,11 +60,13 @@ async def fulfill_paid_order(
     order_id: str,
     plan_id: str,
     amount: int,
-    telegram_id: int | None,
+    telegram_id: int | None = None,
+    web_user_id: int | None = None,
+    web_email: str | None = None,
     note: str = "",
 ) -> dict[str, Any]:
     """
-    Activate customer plan after payment.
+    Activate customer plan after payment (Telegram and/or Web).
     Idempotent by order_id.
     """
     order_id = (order_id or "").strip()
@@ -79,30 +82,79 @@ async def fulfill_paid_order(
         plan_id = "basic"
     plan = get_plan(plan_id)
 
-    if not telegram_id:
-        logger.warning("Paid order %s has no telegramId", order_id)
-        return {"ok": False, "error": "missing_telegram_id", "orderId": order_id}
+    has_tg = telegram_id is not None and int(telegram_id) > 0
+    has_web = bool(
+        (web_user_id is not None and int(web_user_id) > 0)
+        or (web_email and str(web_email).strip())
+    )
+    if not has_tg and not has_web:
+        logger.warning("Paid order %s has no telegramId/web user", order_id)
+        return {
+            "ok": False,
+            "error": "missing_customer",
+            "orderId": order_id,
+            "hint": "Cần telegramId hoặc webEmail/webUserId",
+        }
 
     db = get_db()
+    code_str = ""
+    exp = "∞"
+    web_user_out: dict[str, Any] | None = None
+    tg_user_out: dict[str, Any] | None = None
+
     async with db.session() as session:
         code = await create_access_code(
             session,
             plan_id=plan.id,
             days=plan.days,
-            max_uses=1,
+            max_uses=2 if (has_tg and has_web) else 1,
             note=f"auto:{order_id}" + (f" {note}" if note else ""),
             created_by=None,
         )
-        user = await set_user_plan(
-            session,
-            int(telegram_id),
-            plan.id,
-            plan.days,
-        )
+        code_str = code.code
+
+        if has_tg:
+            user = await set_user_plan(
+                session,
+                int(telegram_id),  # type: ignore[arg-type]
+                plan.id,
+                plan.days,
+            )
+            exp = user.expires_at.date().isoformat() if user.expires_at else "∞"
+            tg_user_out = {
+                "telegram_id": int(telegram_id),  # type: ignore[arg-type]
+                "plan_id": user.plan_id,
+                "expires": exp,
+            }
+
+        if has_web:
+            try:
+                wuser = await set_web_user_plan(
+                    session,
+                    email=(web_email or "").strip().lower() or None,
+                    user_id=int(web_user_id) if web_user_id else None,
+                    plan_id=plan.id,
+                    days=plan.days,
+                )
+                web_user_out = user_public(wuser)
+                if not exp or exp == "∞":
+                    exp = (
+                        wuser.plan_expires_at.date().isoformat()
+                        if wuser.plan_expires_at
+                        else "∞"
+                    )
+            except ValueError as exc:
+                logger.warning("Web fulfill failed order=%s: %s", order_id, exc)
+                if not has_tg:
+                    return {
+                        "ok": False,
+                        "error": "web_user_not_found",
+                        "detail": str(exc),
+                        "orderId": order_id,
+                    }
 
     _remember(order_id)
 
-    exp = user.expires_at.date().isoformat() if user.expires_at else "∞"
     limit = "∞" if plan.daily_messages < 0 else str(plan.daily_messages)
 
     customer_text = (
@@ -111,28 +163,32 @@ async def fulfill_paid_order(
         f"Số tiền: *{amount:,}* {settings.currency}\n"
         f"Gói: *{plan.name}* — {limit} tin/ngày\n"
         f"Hết hạn: `{exp}`\n\n"
-        f"Mã kích hoạt (đã auto-active):\n`{code.code}`\n\n"
-        f"Bạn có thể chat ngay. Gõ /account hoặc /help."
+        f"Mã kích hoạt (đã auto-active):\n`{code_str}`\n\n"
+        f"• Telegram: chat ngay — /account\n"
+        f"• Web: đăng nhập lại → gói hiện trên avatar\n"
+        f"  (hoặc gõ `/activate {code_str}` trong web chat)"
     )
 
     admin_text = (
-        f"💰 *Paid*\n"
+        f"💰 *Paid (autobank)*\n"
         f"Order: `{order_id}`\n"
-        f"User: `{telegram_id}`\n"
+        f"TG: `{telegram_id or '-'}`\n"
+        f"Web: `{web_email or web_user_id or '-'}`\n"
         f"Plan: *{plan.name}* ({plan.id})\n"
         f"Amount: {amount:,} {settings.currency}\n"
-        f"Code: `{code.code}`"
+        f"Code: `{code_str}`"
     )
 
-    try:
-        await bot.send_message(
-            int(telegram_id), customer_text, parse_mode="Markdown"
-        )
-    except Exception:
-        logger.exception("Cannot message customer %s", telegram_id)
+    if has_tg:
+        try:
+            await bot.send_message(
+                int(telegram_id), customer_text, parse_mode="Markdown"  # type: ignore[arg-type]
+            )
+        except Exception:
+            logger.exception("Cannot message customer %s", telegram_id)
 
     for admin_id in settings.owner_ids:
-        if admin_id == int(telegram_id):
+        if has_tg and admin_id == int(telegram_id):  # type: ignore[arg-type]
             continue
         try:
             await bot.send_message(admin_id, admin_text, parse_mode="Markdown")
@@ -140,17 +196,21 @@ async def fulfill_paid_order(
             logger.exception("Cannot message admin %s", admin_id)
 
     logger.info(
-        "Fulfilled order=%s user=%s plan=%s code=%s",
+        "Fulfilled order=%s tg=%s web=%s plan=%s code=%s",
         order_id,
         telegram_id,
+        web_email or web_user_id,
         plan.id,
-        code.code,
+        code_str,
     )
     return {
         "ok": True,
         "orderId": order_id,
         "plan": plan.id,
-        "telegramId": int(telegram_id),
-        "code": code.code,
+        "telegramId": int(telegram_id) if has_tg else None,
+        "webUser": web_user_out,
+        "telegramUser": tg_user_out,
+        "code": code_str,
         "expires": exp,
+        "message": f"Đã kích hoạt gói {plan.name}",
     }
