@@ -178,7 +178,7 @@ def build_router(
     grok: GrokClient,
     memory: ConversationMemory,
 ) -> Router:
-    router = Router(name="jarvis")
+    router = Router(name="tungdevai")
     planner = PlannerAgent(grok)
     coder = CoderAgent(grok)
     reviewer = ReviewerAgent(grok)
@@ -295,7 +295,7 @@ def build_router(
         bank_code = settings.bank_id or order.bank_code
         bank_acc = settings.bank_account or order.bank_account
         bank_name = settings.bank_account_name or order.bank_name
-        # Nội dung CK = mã đơn (để đối soát) + gợi ý AI JARVIS
+        # Nội dung CK = mã đơn (để đối soát) + gợi ý AI TUNGDEV
         transfer_content = order.content
 
         caption = order_payment_caption(

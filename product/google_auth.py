@@ -52,6 +52,7 @@ async def upsert_google_user(session: AsyncSession, info: dict[str, Any]) -> Goo
             name=info.get("name"),
             picture=info.get("picture"),
             active=True,
+            email_verified=True,
             last_login_at=now,
             created_at=now,
         )
@@ -60,6 +61,7 @@ async def upsert_google_user(session: AsyncSession, info: dict[str, Any]) -> Goo
         user.email = info.get("email") or user.email
         user.name = info.get("name") or user.name
         user.picture = info.get("picture") or user.picture
+        user.email_verified = True
         user.last_login_at = now
         if not user.active:
             raise ValueError("Tai khoan da bi khoa")

@@ -1,4 +1,4 @@
-"""HTTP webhook server: vietqr-pay → Jarvis fulfill."""
+"""HTTP webhook server: vietqr-pay → TungDevAI fulfill."""
 
 from __future__ import annotations
 
@@ -30,7 +30,7 @@ def create_app(bot: Bot, settings: Settings) -> web.Application:
     app = web.Application()
 
     async def health(_request: web.Request) -> web.Response:
-        return web.json_response({"ok": True, "service": "jarvis-fulfill"})
+        return web.json_response({"ok": True, "service": "tungdevai-fulfill"})
 
     async def orders_paid(request: web.Request) -> web.Response:
         if not _check_secret(request, settings):

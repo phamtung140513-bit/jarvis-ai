@@ -1,4 +1,4 @@
-# Jarvis Web Chat (GitHub Pages)
+# TUNGDEVAI WEB Chat (GitHub Pages)
 
 Giao diện **kiểu ChatGPT**, host **miễn phí** trên GitHub Pages (static).
 
@@ -37,7 +37,7 @@ Một số API chặn gọi từ `*.github.io`:
 
 - Thử **OpenRouter** (preset)  
 - Hoặc tắt **Stream**  
-- Hoặc trỏ Base URL sang backend Jarvis của bạn (VPS / tunnel) nếu có CORS
+- Hoặc trỏ Base URL sang backend TungDevAI của bạn (VPS / tunnel) nếu có CORS
 
 ## Deploy free
 

@@ -1,4 +1,4 @@
-# Jarvis-AI — Phase 1+
+# TungDevAI — Phase 1+
 aiogram>=3.13.0,<4
 httpx>=0.27.0
 SQLAlchemy>=2.0.36

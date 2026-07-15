@@ -2,7 +2,7 @@
 # Dùng: docker compose -f docker-compose.full.yml up -d --build
 #
 # Yêu cầu:
-#   - ./ .env          (Jarvis)
+#   - ./ .env          (TungDevAI)
 #   - ../vietqr-pay/.env
 # Đặt 2 thư mục cạnh nhau:
 #   /opt/Jarvis-AI
@@ -11,7 +11,7 @@
 services:
   jarvis:
     build: .
-    container_name: jarvis-ai
+    container_name: TungDevAI
     restart: unless-stopped
     env_file:
       - .env

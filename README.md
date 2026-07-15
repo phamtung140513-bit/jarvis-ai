@@ -1,4 +1,4 @@
-# Jarvis-AI
+# TungDevAI
 
 Trợ lý coding qua **Telegram** — hỗ trợ **bán gói (SaaS)** + **white-label**.
 
@@ -93,13 +93,12 @@ Mở trình duyệt: **http://127.0.0.1:7860**
 
 ### CLI / CMD (giống agent terminal)
 
-Chat Jarvis ngay trong Command Prompt / PowerShell — **cùng model + .env + luật owner** với bot Telegram:
+Chat TungDevAI ngay trong Command Prompt / PowerShell — **cùng model + .env + luật owner** với bot Telegram:
 
 ```powershell
 cd C:\Users\Admin\Jarvis-AI
-.\jarvis.cmd
-# hoặc
-python -m cli
+.\tungdev.cmd
+# hoặc .\jarvis.cmd  /  python -m cli
 # one-shot
 python -m cli --mode coder "viết API FastAPI hello"
 ```
@@ -133,7 +132,7 @@ Xem **[DEPLOY_VPS.md](DEPLOY_VPS.md)** — thuê VPS Ubuntu (~50–120k/tháng) 
 ## Kiến trúc
 
 ```
-Jarvis-AI/
+Jarvis-AI/   # folder name on disk (brand: TungDevAI)
 ├── bot.py / launcher.py / config.py
 ├── ai/          # LLM client + memory + agents (dùng chung bot & web)
 ├── webapp/      # Web chat UI + FastAPI

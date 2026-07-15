@@ -1,5 +1,5 @@
 """
-Jarvis CMD — chat AI ngay trong terminal (cùng model/config với bot Telegram).
+TungDevAI CMD — chat AI ngay trong terminal (cùng model/config với bot Telegram).
 
 Chạy:
   jarvis.cmd
@@ -111,7 +111,7 @@ async def run_repl(one_shot: str | None = None) -> int:
         )
         async with db.session() as session:
             await memory.add_persist(session, CLI_USER_ID, "user", text)
-        _print("\n… Jarvis đang nghĩ …\n")
+        _print("\n… TungDevAI đang nghĩ …\n")
         try:
             reply = await grok.chat(
                 memory.get_messages(CLI_USER_ID),
@@ -347,8 +347,8 @@ Chat thường: gõ câu hỏi rồi Enter (không cần /).
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        prog="jarvis",
-        description="Jarvis AI — terminal CMD agent (cùng config với Telegram bot)",
+        prog="tungdevai",
+        description="TungDevAI — terminal CMD agent (cùng config với Telegram bot)",
     )
     parser.add_argument(
         "prompt",

@@ -8,12 +8,12 @@ Giong ChatGPT / Claude: user bam **Sign in with Google** tren web.
 2. Tao project (hoac chon project co san)  
 3. **Configure OAuth consent screen**  
    - User type: **External**  
-   - App name: Jarvis AI  
+   - App name: TungDevAI  
    - Support email: email ban  
    - Save  
 4. **Credentials → Create credentials → OAuth client ID**  
    - Application type: **Web application**  
-   - Name: Jarvis Web  
+   - Name: TUNGDEVAI WEB  
    - **Authorized JavaScript origins**:
      ```
      http://127.0.0.1:7860

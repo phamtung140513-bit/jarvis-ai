@@ -1,8 +1,8 @@
-# Jarvis-AI local stack (Phase 1: bot only; Phase 5: + sandbox)
+# TungDevAI local stack (Phase 1: bot only; Phase 5: + sandbox)
 services:
   jarvis:
     build: .
-    container_name: jarvis-ai
+    container_name: TungDevAI
     restart: unless-stopped
     env_file:
       - .env

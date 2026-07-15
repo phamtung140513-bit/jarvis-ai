@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Jarvis AI - Chat</title>
-  <meta name="description" content="Jarvis AI coding chat - Sign in with Google" />
+  <title>TungDevAI - Chat</title>
+  <meta name="description" content="TungDevAI coding chat - Dang nhap email hoac Google" />
   <meta name="theme-color" content="#212121" />
   <script>
     (function () {
@@ -18,20 +18,60 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="chat.css?v=11" />
+  <link rel="stylesheet" href="chat.css?v=13" />
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
-  <!-- Google login gate (like ChatGPT) -->
+  <!-- Auth gate — like ChatGPT / Claude / Gemini -->
   <div id="authGate" class="auth-gate">
     <div class="auth-card">
-      <img src="assets/bot-avatar.jpg" alt="Jarvis" class="auth-logo" />
-      <h1>Jarvis AI</h1>
-      <p class="auth-sub">Senior coding assistant. Dang nhap bang Google de bat dau — giong cac AI khac.</p>
+      <img src="assets/bot-avatar.jpg" alt="TungDevAI" class="auth-logo" />
+      <h1>TungDevAI</h1>
+      <p class="auth-sub">Senior coding assistant. Dang nhap de bat dau.</p>
+
+      <div class="auth-tabs" role="tablist">
+        <button type="button" class="auth-tab active" id="tabLogin" data-tab="login">Dang nhap</button>
+        <button type="button" class="auth-tab" id="tabRegister" data-tab="register">Dang ky</button>
+      </div>
+
+      <!-- Login -->
+      <form id="formLogin" class="auth-form" autocomplete="on">
+        <label class="auth-label" for="loginEmail">Email</label>
+        <input class="auth-input" id="loginEmail" type="email" placeholder="ban@email.com" required autocomplete="email" />
+        <label class="auth-label" for="loginPassword">Mat khau</label>
+        <input class="auth-input" id="loginPassword" type="password" placeholder="Mat khau" required minlength="6" autocomplete="current-password" />
+        <button type="submit" class="auth-primary" id="btnLoginSubmit">Dang nhap</button>
+      </form>
+
+      <!-- Register -->
+      <form id="formRegister" class="auth-form hidden" autocomplete="on">
+        <label class="auth-label" for="regName">Ten hien thi</label>
+        <input class="auth-input" id="regName" type="text" placeholder="Ten cua ban" maxlength="80" autocomplete="name" />
+        <label class="auth-label" for="regEmail">Email</label>
+        <input class="auth-input" id="regEmail" type="email" placeholder="ban@email.com" required autocomplete="email" />
+        <label class="auth-label" for="regPassword">Mat khau</label>
+        <input class="auth-input" id="regPassword" type="password" placeholder="Toi thieu 6 ky tu" required minlength="6" autocomplete="new-password" />
+
+        <div class="auth-code-row">
+          <div class="auth-code-field">
+            <label class="auth-label" for="regCode">Ma xac thuc</label>
+            <input class="auth-input" id="regCode" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="8" placeholder="6 so tu email" autocomplete="one-time-code" />
+          </div>
+          <button type="button" class="auth-secondary" id="btnSendCode">Gui ma</button>
+        </div>
+        <p class="auth-hint" id="codeHint"></p>
+        <button type="submit" class="auth-primary" id="btnRegisterSubmit">Tao tai khoan</button>
+      </form>
+
+      <div class="auth-divider"><span>hoac</span></div>
+
       <div id="googleBtnWrap" class="google-btn-wrap"></div>
-      <p class="auth-hint" id="authHint">Dang tai Google Sign-In...</p>
+      <button type="button" class="auth-google-fallback hidden" id="btnGoogleFallback">Tiep tuc voi Google</button>
+
+      <p class="auth-hint" id="authHint"></p>
       <p class="auth-err hidden" id="authErr"></p>
-      <p class="auth-foot">Khong share API key. Server giu key AI.</p>
+      <p class="auth-ok hidden" id="authOk"></p>
+      <p class="auth-foot">Email + ma xac thuc, hoac Google — giong cac AI tren thi truong.</p>
     </div>
   </div>
 
@@ -50,13 +90,14 @@
         <a class="side-link" href="landing.html">Trang gioi thieu</a>
         <a class="side-link" id="tgLink" href="https://t.me/grokapiai_bot" target="_blank" rel="noopener">Bot Telegram</a>
         <button type="button" class="side-link as-btn" id="btnLogout">Dang xuat</button>
-        <div class="user-chip">
+        <!-- Click when logged out = open login; when logged in = user info -->
+        <button type="button" class="user-chip as-btn" id="userChipBtn" title="Tai khoan">
           <img src="assets/bot-avatar.jpg" alt="" width="28" height="28" id="userAvatar" />
-          <div>
-            <div class="user-name" id="appNameLabel">Jarvis AI</div>
-            <div class="user-sub" id="modelChip">coder mode</div>
+          <div class="user-chip-text">
+            <div class="user-name" id="appNameLabel">TungDevAI</div>
+            <div class="user-sub" id="modelChip">Dang nhap</div>
           </div>
-        </div>
+        </button>
       </div>
     </aside>
 
@@ -66,19 +107,19 @@
       <header class="topbar">
         <button type="button" class="icon-btn mobile-only" id="btnOpenSidebar" aria-label="Menu">=</button>
         <div class="topbar-title">
-          <span id="chatTitle">Jarvis</span>
+          <span id="chatTitle">TungDevAI</span>
           <span class="dot" id="statusDot" title="Trang thai"></span>
         </div>
-        <div class="user-pill" id="userPill" title="">
-          <img id="userPillImg" alt="" width="24" height="24" />
-          <span id="userPillName">User</span>
-        </div>
+        <button type="button" class="user-pill as-btn" id="userPill" title="Tai khoan">
+          <img id="userPillImg" alt="" width="24" height="24" src="assets/bot-avatar.jpg" />
+          <span id="userPillName">Dang nhap</span>
+        </button>
       </header>
 
       <section class="messages" id="messages" aria-live="polite">
         <div class="welcome" id="welcome">
-          <img class="welcome-avatar" src="assets/bot-avatar.jpg" alt="Jarvis" />
-          <h1>Jarvis AI</h1>
+          <img class="welcome-avatar" src="assets/bot-avatar.jpg" alt="TungDevAI" />
+          <h1>TungDevAI</h1>
           <p>Senior coding assistant. Xin chao <strong id="welcomeName">ban</strong>!</p>
           <div class="suggestions">
             <button type="button" data-q="Viet API FastAPI CRUD user (SQLAlchemy + Pydantic), co error handling">FastAPI CRUD</button>
@@ -98,16 +139,16 @@
               <span class="plus-glyph">+</span>
             </button>
           </div>
-          <textarea id="input" rows="1" placeholder="Nhan tin cho Jarvis..." autocomplete="off" enterkeyhint="send"></textarea>
+          <textarea id="input" rows="1" placeholder="Nhan tin cho TungDevAI..." autocomplete="off" enterkeyhint="send"></textarea>
           <button type="submit" id="btnSend" aria-label="Gui" title="Gui">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
           </button>
         </form>
-        <p class="disclaimer">Dang nhap bang Google — giong ChatGPT / Claude.</p>
+        <p class="disclaimer">Dang nhap email (ma xac thuc) hoac Google — giong ChatGPT / Claude.</p>
       </div>
     </main>
   </div>
 
-  <script src="chat.js?v=11"></script>
+  <script src="chat.js?v=13"></script>
 </body>
 </html>

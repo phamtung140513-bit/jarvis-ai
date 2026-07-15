@@ -4,17 +4,17 @@ set PATH=C:\Program Files\GitHub CLI;C:\Program Files\Git\bin;%PATH%
 cd /d "%~dp0"
 
 echo ============================================
-echo   JARVIS AI - Day len GitHub Pages (free)
+echo   TungDevAI - Day len GitHub Pages (free)
 echo   User: phamtung140513-bit
-echo   Repo: jarvis-ai
+echo   Repo: TungDevAI
 echo ============================================
 echo.
 
 REM 1) Mo trang tao repo (neu chua co)
 echo [1/4] Mo trinh duyet tao repo (neu can)...
-start "" "https://github.com/new?name=jarvis-ai&description=Jarvis+AI+ChatGPT-style+web+%2B+Telegram+bot&visibility=public"
+start "" "https://github.com/new?name=tungdevai&description=TungDevAI+ChatGPT-style+web+%2B+Telegram+bot&visibility=public"
 echo     - Owner: phamtung140513-bit
-echo     - Name: jarvis-ai
+echo     - Name: TungDevAI
 echo     - Public, KHONG tick README
 echo     - Bam Create repository
 echo.
@@ -36,7 +36,7 @@ echo.
 echo [3/4] Tao / kiem tra repo...
 gh repo view phamtung140513-bit/jarvis-ai >nul 2>&1
 if errorlevel 1 (
-  gh repo create jarvis-ai --public --source=. --remote=origin --description "Jarvis AI - ChatGPT-style web + Telegram bot"
+  gh repo create TungDevAI --public --source=. --remote=origin --description "TungDevAI - ChatGPT-style web + Telegram bot"
   if errorlevel 1 (
     echo     Repo co the da co remote. Tiep tuc push...
   )

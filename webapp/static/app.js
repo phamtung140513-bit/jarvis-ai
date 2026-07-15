@@ -65,12 +65,12 @@
     row.className = `msg ${role}`;
     const av = document.createElement("div");
     av.className = "avatar";
-    av.textContent = role === "user" ? "U" : "J";
+    av.textContent = role === "user" ? "U" : "T";
     const bubble = document.createElement("div");
     bubble.className = "bubble";
     const roleEl = document.createElement("div");
     roleEl.className = "role";
-    roleEl.textContent = role === "user" ? "Bạn" : "Jarvis";
+    roleEl.textContent = role === "user" ? "Bạn" : "TungDevAI";
     const body = document.createElement("div");
     body.className = "content";
     body.innerHTML = formatMarkdown(text);
@@ -232,8 +232,8 @@
     try {
       const res = await fetch("/api/config");
       const cfg = await res.json();
-      els.appName.textContent = cfg.app_name || "Jarvis AI";
-      document.title = cfg.app_name || "Jarvis AI";
+      els.appName.textContent = cfg.app_name || "TungDevAI";
+      document.title = cfg.app_name || "TungDevAI";
       els.modelLabel.textContent = `${cfg.provider} · ${cfg.model}`;
       if (cfg.telegram_bot) els.tgLink.href = cfg.telegram_bot;
       if (cfg.auth_required) {

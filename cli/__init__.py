@@ -1,4 +1,4 @@
-"""Jarvis CLI — terminal coding assistant (local)."""
+"""TungDevAI CLI — terminal coding assistant (local)."""
 
 __all__ = ["main"]
 

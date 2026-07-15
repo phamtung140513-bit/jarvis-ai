@@ -1,4 +1,4 @@
-# Đổi “tên miền” web Jarvis
+# Đổi “tên miền” web TungDevAI
 
 ## Miền đang dùng (chốt — dễ nhất)
 
@@ -23,8 +23,8 @@ https://phamtung140513-bit.github.io/jarvis-ai/
 
 ## Quan trọng
 
-Trên GitHub, tên **`jarvis-ai` đã bị người khác chiếm**  
-(user: https://github.com/JARVIS-AI) → **không** tạo được `https://jarvis-ai.github.io/` free.
+Trên GitHub, tên **`TungDevAI` đã bị người khác chiếm**  
+(user: https://github.com/TungDevAI) → **không** tạo được `https://TungDevAI.github.io/` free.
 
 ---
 
@@ -69,13 +69,13 @@ https://jarvisai-tung.github.io/landing.html
 
 ---
 
-## Cách 2 — Domain riêng `jarvis-ai.com` / `.vn` (trả phí)
+## Cách 2 — Domain riêng `TungDevAI.com` / `.vn` (trả phí)
 
 1. Mua domain (Namecheap, Cloudflare, Nhà đăng ký VN…)  
-   Ví dụ: `jarvis-ai.com` hoặc `jarvisai.vn`
+   Ví dụ: `TungDevAI.com` hoặc `jarvisai.vn`
 
 2. Trong repo đang có Pages (`phamtung140513-bit/jarvis-ai`):  
-   **Settings → Pages → Custom domain** → nhập `jarvis-ai.com`
+   **Settings → Pages → Custom domain** → nhập `TungDevAI.com`
 
 3. DNS (Cloudflare/DNS provider):
 
@@ -95,7 +95,7 @@ Với apex `@` nhiều nhà cung cấp cần **A record** theo docs GitHub:
 4. File `docs/CNAME` (sau khi set custom domain GitHub có thể tự tạo):
 
 ```text
-jarvis-ai.com
+TungDevAI.com
 ```
 
 5. Bật **Enforce HTTPS** khi DNS xanh.
@@ -103,7 +103,7 @@ jarvis-ai.com
 URL:
 
 ```text
-https://jarvis-ai.com/
+https://TungDevAI.com/
 ```
 
 ---
@@ -123,7 +123,7 @@ Vẫn free, ổn định. Có thể rút gọn bằng bit.ly / t.me link.
 | Muốn | Làm |
 |------|-----|
 | Free, ngắn | Org **`jarvisai`** → `https://jarvisai.github.io/` |
-| Đúng chữ jarvis-ai | Mua domain **`jarvis-ai.com`** |
+| Đúng chữ TungDevAI | Mua domain **`TungDevAI.com`** |
 | Nhanh nhất | Dùng link hiện tại |
 
 Nhắn mình chọn **1 / 2 / 3** để cấu hình tiếp (CNAME, push org…).

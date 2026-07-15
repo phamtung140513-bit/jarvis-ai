@@ -1,4 +1,4 @@
-# Hướng dẫn bán Jarvis-AI
+# Hướng dẫn bán TungDevAI
 
 Bạn có **2 cách kiếm tiền** với repo này.
 
@@ -23,7 +23,7 @@ Bạn host bot, khách trả tiền → nhận **mã** → `/activate`.
    BANK_ID=mb
    BANK_ACCOUNT=0123456789
    BANK_ACCOUNT_NAME=NGUYEN VAN A
-   BANK_TRANSFER_CONTENT=AI JARVIS
+   BANK_TRANSFER_CONTENT=AI TUNGDEV
    # hoặc ảnh QR sẵn: PAYMENT_QR_PATH=./assets/qr-bank.png
    ```
 

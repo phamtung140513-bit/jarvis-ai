@@ -1,4 +1,4 @@
-"""Jarvis-AI Telegram bot entry (aiogram 3 polling)."""
+"""TungDevAI Telegram bot entry (aiogram 3 polling)."""
 
 from __future__ import annotations
 

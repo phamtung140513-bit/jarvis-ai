@@ -1,9 +1,9 @@
 @echo off
 chcp 65001 >nul
-title JARVIS WEB - DUNG TAT CUA SO NAY
+title TUNGDEVAI WEB - DUNG TAT CUA SO NAY
 cd /d "%~dp0"
 echo ============================================
-echo   JARVIS WEB SERVER
+echo   TUNGDEVAI WEB SERVER
 echo ============================================
 echo.
 echo   Chat:  http://127.0.0.1:7860/

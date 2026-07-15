@@ -1,7 +1,7 @@
 @echo off
 chcp 65001 >nul
 echo ============================================
-echo   Jarvis AI - Web (CUNG MIEN voi API)
+echo   TungDevAI - Web (CUNG MIEN voi API)
 echo ============================================
 echo.
 echo   URL chinh (web + API cung 1 mien):

@@ -1,4 +1,4 @@
-# Hướng dẫn ra miền tĩnh GitHub Pages (Jarvis AI)
+# Hướng dẫn ra miền tĩnh GitHub Pages (TungDevAI)
 
 Landing đã nằm trong `docs/` — chỉ cần đưa lên GitHub.
 
@@ -29,7 +29,7 @@ Lần đầu mở chat → ⚙️ dán **Groq API key** (free): https://console.
 ## 2. Tạo repo trên GitHub
 
 1. Vào https://github.com/new  
-2. Tên gợi ý: `jarvis-ai` hoặc `jarvis-landing`  
+2. Tên gợi ý: `TungDevAI` hoặc `jarvis-landing`  
 3. **Public** (Pages free dễ) hoặc Private (cần plan cho private Pages)  
 4. **Không** tick README nếu sẽ push từ máy  
 
@@ -53,7 +53,7 @@ git status
 
 git config user.name "YourName"
 git config user.email "you@example.com"
-git commit -m "Add Jarvis AI + GitHub Pages landing"
+git commit -m "Add TungDevAI + GitHub Pages landing"
 
 # Đổi YOUR_USER / YOUR_REPO
 git remote add origin https://github.com/YOUR_USER/YOUR_REPO.git

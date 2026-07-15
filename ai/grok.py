@@ -30,7 +30,7 @@ class GrokClient:
         }
         # OpenRouter recommends these optional headers
         if self.settings.provider == "openrouter":
-            headers["HTTP-Referer"] = "https://github.com/jarvis-ai"
+            headers["HTTP-Referer"] = "https://github.com/TungDevAI"
             headers["X-Title"] = self.settings.app_name
 
         self._client = httpx.AsyncClient(

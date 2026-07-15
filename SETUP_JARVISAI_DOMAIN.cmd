@@ -37,7 +37,7 @@ echo.
 echo Buoc 3: Tao repo neu chua co...
 gh repo view %ORG%/%REPO% >nul 2>&1
 if errorlevel 1 (
-  gh repo create %ORG%/%REPO% --public --description "Jarvis AI free site"
+  gh repo create %ORG%/%REPO% --public --description "TungDevAI free site"
 )
 
 echo.

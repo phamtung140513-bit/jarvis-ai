@@ -68,7 +68,7 @@ class Settings(BaseSettings):
     bank_id: str = Field("", alias="BANK_ID")
     bank_account: str = Field("", alias="BANK_ACCOUNT")
     bank_account_name: str = Field("", alias="BANK_ACCOUNT_NAME")
-    bank_transfer_content: str = Field("AI JARVIS", alias="BANK_TRANSFER_CONTENT")
+    bank_transfer_content: str = Field("AI TUNGDEV", alias="BANK_TRANSFER_CONTENT")
     # vietqr-pay integration (Node server)
     # VIETQR_PAY_URL=http://127.0.0.1:3000  → /buy tạo đơn + QR qua server
     vietqr_pay_url: str = Field("", alias="VIETQR_PAY_URL")
@@ -106,7 +106,7 @@ class Settings(BaseSettings):
     xai_max_tokens: int | None = Field(None, alias="XAI_MAX_TOKENS")
 
     # App
-    app_name: str = Field("Jarvis-AI", alias="APP_NAME")
+    app_name: str = Field("TungDevAI", alias="APP_NAME")
     log_level: str = Field("INFO", alias="LOG_LEVEL")
     database_url: str = Field(
         "sqlite+aiosqlite:///./cache/jarvis.db",
@@ -123,8 +123,19 @@ class Settings(BaseSettings):
     web_cors_origins: str = Field("*", alias="WEB_CORS_ORIGINS")
     # Google Sign-In (OAuth client ID from Google Cloud Console)
     google_client_id: str = Field("", alias="GOOGLE_CLIENT_ID")
-    # If true, web chat requires Google login first
+    # If true, web chat requires login (Google and/or email) first
     google_auth_required: bool = Field(True, alias="GOOGLE_AUTH_REQUIRED")
+    # Prefer WEB_AUTH_REQUIRED; falls back to GOOGLE_AUTH_REQUIRED
+    web_auth_required: bool | None = Field(None, alias="WEB_AUTH_REQUIRED")
+    # SMTP for email verification codes (register like ChatGPT/Claude)
+    smtp_host: str = Field("", alias="SMTP_HOST")
+    smtp_port: int = Field(587, alias="SMTP_PORT")
+    smtp_user: str = Field("", alias="SMTP_USER")
+    smtp_password: str = Field("", alias="SMTP_PASSWORD")
+    smtp_from: str = Field("", alias="SMTP_FROM")
+    smtp_tls: bool = Field(True, alias="SMTP_TLS")
+    # When SMTP not set: log OTP to server console and return dev_code in API
+    auth_dev_show_code: bool = Field(True, alias="AUTH_DEV_SHOW_CODE")
 
     @field_validator("workspace_dir", mode="before")
     @classmethod

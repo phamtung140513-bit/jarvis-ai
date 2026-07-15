@@ -13,7 +13,7 @@ Muc tieu:
    winget install --id Cloudflare.cloudflared
    ```
 
-## Buoc 2 — Bat server Jarvis
+## Buoc 2 — Bat server TungDevAI
 
 ```bat
 C:\Users\Admin\Jarvis-AI\CHAY_SERVER.bat
@@ -47,7 +47,7 @@ Hoac sua `docs/config.json` tren repo:
 {
   "apiBase": "https://xxxx.trycloudflare.com",
   "telegramBot": "https://t.me/grokapiai_bot",
-  "appName": "Jarvis AI"
+  "appName": "TungDevAI"
 }
 ```
 

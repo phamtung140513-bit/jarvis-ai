@@ -1,5 +1,5 @@
 /**
- * Jarvis Admin management console (secret page /j-panel.html).
+ * TungDevAI Admin management console (secret page /j-panel.html).
  * Works on same-origin server or GitHub Pages (API -> 127.0.0.1:7860).
  */
 (() => {

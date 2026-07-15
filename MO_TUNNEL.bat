@@ -1,6 +1,6 @@
 @echo off
 chcp 65001 >nul
-title Cloudflare Tunnel - Jarvis 7860
+title Cloudflare Tunnel - TungDevAI 7860
 cd /d "%~dp0"
 
 where cloudflared >nul 2>&1

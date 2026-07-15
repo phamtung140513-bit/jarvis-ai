@@ -1,4 +1,4 @@
-# Start Jarvis bot + VietQR pay + web as independent Windows processes
+# Start TungDevAI bot + VietQR pay + web as independent Windows processes
 $ErrorActionPreference = "SilentlyContinue"
 $BotDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $PayDir = "C:\Users\Admin\vietqr-pay"

@@ -127,16 +127,19 @@ class UserTeaching(Base):
 
 
 class GoogleWebUser(Base):
-    """Web users signed in with Google (like ChatGPT / Claude)."""
+    """Web users: Google Sign-In and/or email+password (OTP verified)."""
 
     __tablename__ = "google_web_users"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    # Google sub OR synthetic "email:<hash>" for email-only accounts
     google_sub: Mapped[str] = mapped_column(String(64), unique=True, index=True, nullable=False)
     email: Mapped[str | None] = mapped_column(String(256), nullable=True, index=True)
     name: Mapped[str | None] = mapped_column(String(256), nullable=True)
     picture: Mapped[str | None] = mapped_column(String(512), nullable=True)
     active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    password_hash: Mapped[str | None] = mapped_column(String(256), nullable=True)
+    email_verified: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     last_login_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )

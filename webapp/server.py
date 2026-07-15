@@ -40,6 +40,15 @@ from database.sqlite import Database, set_db  # noqa: E402
 from product.access_codes import create_access_code  # noqa: E402
 from product.plans import PLANS, get_plan  # noqa: E402
 from database.repos import load_recent_messages, save_message  # noqa: E402
+from product.email_auth import (  # noqa: E402
+    OtpStore,
+    ensure_web_user_columns,
+    login_email_user,
+    normalize_email,
+    register_email_user,
+    send_otp_email,
+    valid_email,
+)
 from product.google_auth import upsert_google_user, verify_google_id_token  # noqa: E402
 from product.users import (  # noqa: E402
     deactivate_user,
@@ -94,6 +103,23 @@ class GoogleLoginBody(BaseModel):
     credential: str = Field(..., min_length=10, description="Google GIS ID token JWT")
 
 
+class SendCodeBody(BaseModel):
+    email: str = Field(..., min_length=5, max_length=256)
+    purpose: str = Field(default="register", max_length=32)  # register | reset
+
+
+class RegisterBody(BaseModel):
+    email: str = Field(..., min_length=5, max_length=256)
+    password: str = Field(..., min_length=6, max_length=128)
+    code: str = Field(..., min_length=4, max_length=12)
+    name: str = Field(default="", max_length=120)
+
+
+class EmailLoginBody(BaseModel):
+    email: str = Field(..., min_length=5, max_length=256)
+    password: str = Field(..., min_length=1, max_length=128)
+
+
 class SessionMemory:
     def __init__(self, max_messages: int = 40) -> None:
         self._max = max_messages
@@ -120,16 +146,30 @@ def create_app() -> FastAPI:
     access_token = (settings.web_access_token or os.getenv("WEB_ACCESS_TOKEN") or "").strip()
     admin_key = (settings.web_admin_key or os.getenv("WEB_ADMIN_KEY") or "").strip()
     google_client_id = (settings.google_client_id or os.getenv("GOOGLE_CLIENT_ID") or "").strip()
-    google_auth_required = bool(settings.google_auth_required)
+    # WEB_AUTH_REQUIRED wins; else GOOGLE_AUTH_REQUIRED (legacy)
+    if settings.web_auth_required is not None:
+        auth_required = bool(settings.web_auth_required)
+    else:
+        auth_required = bool(settings.google_auth_required)
+    google_auth_required = auth_required  # keep name for older clients
     cors_raw = (settings.web_cors_origins or os.getenv("WEB_CORS_ORIGINS") or "*").strip()
     cors_origins = [o.strip() for o in cors_raw.split(",") if o.strip()]
 
+    smtp_host = (settings.smtp_host or os.getenv("SMTP_HOST") or "").strip()
+    smtp_port = int(settings.smtp_port or 587)
+    smtp_user = (settings.smtp_user or os.getenv("SMTP_USER") or "").strip()
+    smtp_password = (settings.smtp_password or os.getenv("SMTP_PASSWORD") or "").strip()
+    smtp_from = (settings.smtp_from or os.getenv("SMTP_FROM") or smtp_user or "").strip()
+    smtp_tls = bool(settings.smtp_tls)
+    auth_dev_show_code = bool(settings.auth_dev_show_code)
+
     # Admin session tokens (in-memory; restart invalidates)
     admin_sessions: set[str] = set()
-    # Google user sessions: token -> user dict
+    # User sessions: token -> user dict (Google + email)
     user_sessions: dict[str, dict[str, Any]] = {}
+    otp_store = OtpStore()
 
-    app = FastAPI(title=f"{settings.app_name} Web", version="1.3")
+    app = FastAPI(title=f"{settings.app_name} Web", version="1.4")
     app.state.settings = settings
     app.state.memory = memory
     app.state.grok = grok
@@ -140,12 +180,16 @@ def create_app() -> FastAPI:
     app.state.user_sessions = user_sessions
     app.state.google_client_id = google_client_id
     app.state.google_auth_required = google_auth_required
+    app.state.auth_required = auth_required
 
     @app.on_event("startup")
     async def _startup() -> None:
         await db.init()
+        # Migrate email-auth columns on existing DBs
+        async with db.engine.begin() as conn:
+            await ensure_web_user_columns(conn)
         set_db(db)
-        logger.info("Web DB ready for admin management")
+        logger.info("Web DB ready (email + Google auth)")
 
     app.add_middleware(
         CORSMiddleware,
@@ -186,17 +230,37 @@ def create_app() -> FastAPI:
                 if not (x_user_session and x_user_session in user_sessions):
                     raise HTTPException(status_code=401, detail="Sai user access token")
 
-        if google_auth_required:
+        if auth_required:
             sess = (x_user_session or "").strip()
             if not sess or sess not in user_sessions:
                 raise HTTPException(
                     status_code=401,
-                    detail="Can dang nhap Google",
+                    detail="Can dang nhap (email hoac Google)",
                 )
             return user_sessions[sess]
         if x_user_session and x_user_session in user_sessions:
             return user_sessions[x_user_session]
         return None
+
+    def _issue_session(user: Any) -> dict[str, Any]:
+        sess = secrets.token_urlsafe(32)
+        payload = {
+            "id": getattr(user, "id", None),
+            "google_sub": getattr(user, "google_sub", None),
+            "email": getattr(user, "email", None),
+            "name": getattr(user, "name", None),
+            "picture": getattr(user, "picture", None),
+        }
+        user_sessions[sess] = payload
+        return {
+            "ok": True,
+            "session_token": sess,
+            "user": {
+                "email": payload["email"],
+                "name": payload["name"],
+                "picture": payload["picture"],
+            },
+        }
 
     def _check_admin(
         authorization: str | None,
@@ -282,13 +346,15 @@ def create_app() -> FastAPI:
     async def health() -> dict[str, Any]:
         return {
             "ok": True,
-            "service": "jarvis-web",
+            "service": "tungdevai-web",
             "app": settings.app_name,
             "provider": settings.provider,
             "model": settings.resolved_model,
-            "auth_required": bool(access_token) or google_auth_required,
+            "auth_required": bool(access_token) or auth_required,
+            "email_auth": True,
+            "smtp_configured": bool(smtp_host),
             "google_auth": bool(google_client_id),
-            "google_auth_required": google_auth_required and bool(google_client_id),
+            "google_auth_required": auth_required,
             "admin_enabled": bool(admin_key),
             "same_origin_ui": True,
         }
@@ -301,17 +367,126 @@ def create_app() -> FastAPI:
             "tagline": settings.product_tagline,
             "provider": settings.provider,
             "model": settings.resolved_model,
-            "auth_required": bool(access_token) or (
-                google_auth_required and bool(google_client_id)
-            ),
+            "auth_required": bool(access_token) or auth_required,
+            "email_auth": True,
+            "smtp_configured": bool(smtp_host),
             "google_client_id": google_client_id,
-            "google_auth_required": google_auth_required and bool(google_client_id),
+            "google_auth": bool(google_client_id),
+            "google_auth_required": auth_required,
             "admin_enabled": bool(admin_key),
             "telegram_bot": "https://t.me/grokapiai_bot",
             "role": "coder",
             "apiBase": "",
             "same_origin": True,
         }
+
+    @app.post("/api/auth/send-code")
+    async def auth_send_code(body: SendCodeBody) -> dict[str, Any]:
+        """Send 6-digit verification code to email (register flow)."""
+        email = normalize_email(body.email)
+        purpose = (body.purpose or "register").strip().lower()
+        if purpose not in ("register", "reset"):
+            purpose = "register"
+        if not valid_email(email):
+            raise HTTPException(400, "Email khong hop le")
+
+        if purpose == "register":
+            async with db.session() as session:
+                from product.email_auth import find_user_by_email
+
+                existing = await find_user_by_email(session, email)
+                if existing and existing.password_hash:
+                    raise HTTPException(400, "Email da duoc dang ky. Hay dang nhap.")
+
+        try:
+            code = otp_store.create(email, purpose)
+        except ValueError as exc:
+            raise HTTPException(429, str(exc)) from exc
+
+        sent = False
+        err_msg = ""
+        if smtp_host:
+            try:
+                send_otp_email(
+                    to_email=email,
+                    code=code,
+                    purpose=purpose,
+                    smtp_host=smtp_host,
+                    smtp_port=smtp_port,
+                    smtp_user=smtp_user,
+                    smtp_password=smtp_password,
+                    smtp_from=smtp_from,
+                    smtp_tls=smtp_tls,
+                    app_name=settings.app_name,
+                )
+                sent = True
+            except Exception as exc:
+                logger.exception("SMTP send failed")
+                err_msg = str(exc)
+        else:
+            logger.warning(
+                "SMTP not configured — OTP for %s (%s): %s", email, purpose, code
+            )
+
+        if not sent and not auth_dev_show_code:
+            raise HTTPException(
+                503,
+                "Khong gui duoc email. Cau hinh SMTP_HOST/SMTP_USER/SMTP_PASSWORD trong .env",
+            )
+
+        out: dict[str, Any] = {
+            "ok": True,
+            "email": email,
+            "purpose": purpose,
+            "sent": sent,
+            "message": (
+                "Da gui ma xac thuc toi email cua ban."
+                if sent
+                else "SMTP chua cau hinh — dung ma dev (xem ben duoi / log server)."
+            ),
+            "expires_in": 600,
+        }
+        # Local/dev: return code so you can test without Gmail SMTP
+        if auth_dev_show_code and not sent:
+            out["dev_code"] = code
+            out["message"] = f"Ma xac thuc (dev): {code} — cau hinh SMTP de gui that."
+        if err_msg and auth_dev_show_code:
+            out["dev_code"] = code
+            out["smtp_error"] = err_msg
+            out["message"] = f"SMTP loi, ma dev: {code}"
+        return out
+
+    @app.post("/api/auth/register")
+    async def auth_register(body: RegisterBody) -> dict[str, Any]:
+        """Register with email + password after OTP verification."""
+        email = normalize_email(body.email)
+        if not valid_email(email):
+            raise HTTPException(400, "Email khong hop le")
+        if not otp_store.verify(email, "register", body.code):
+            raise HTTPException(400, "Ma xac thuc sai hoac da het han")
+        try:
+            async with db.session() as session:
+                user = await register_email_user(
+                    session,
+                    email=email,
+                    password=body.password,
+                    name=body.name,
+                )
+        except ValueError as exc:
+            raise HTTPException(400, str(exc)) from exc
+        return _issue_session(user)
+
+    @app.post("/api/auth/login")
+    async def auth_login_email(body: EmailLoginBody) -> dict[str, Any]:
+        """Login with email + password."""
+        try:
+            async with db.session() as session:
+                user = await login_email_user(
+                    session, email=body.email, password=body.password
+                )
+        except ValueError as exc:
+            raise HTTPException(401, str(exc)) from exc
+        return _issue_session(user)
 
     @app.post("/api/auth/google")
     async def auth_google(body: GoogleLoginBody) -> dict[str, Any]:
@@ -333,23 +508,7 @@ def create_app() -> FastAPI:
             except ValueError as exc:
                 raise HTTPException(403, str(exc)) from exc
 
-        sess = secrets.token_urlsafe(32)
-        user_sessions[sess] = {
-            "id": user.id,
-            "google_sub": user.google_sub,
-            "email": user.email,
-            "name": user.name,
-            "picture": user.picture,
-        }
-        return {
-            "ok": True,
-            "session_token": sess,
-            "user": {
-                "email": user.email,
-                "name": user.name,
-                "picture": user.picture,
-            },
-        }
+        return _issue_session(user)
 
     @app.get("/api/auth/me")
     async def auth_me(
@@ -648,7 +807,7 @@ def main() -> None:
         format="%(asctime)s | %(levelname)-7s | %(name)s | %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
     )
-    print(f"🌐 Jarvis Web → http://127.0.0.1:{port}")
+    print(f"🌐 TungDevAI Web → http://127.0.0.1:{port}")
     uvicorn.run(
         "webapp.server:app",
         host=host,

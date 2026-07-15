@@ -1,4 +1,4 @@
-# Deploy Jarvis-AI lên VPS (bot chạy 24/7, không cần bật máy)
+# Deploy TungDevAI lên VPS (bot chạy 24/7, không cần bật máy)
 
 ## 1. Chọn VPS
 
@@ -104,7 +104,7 @@ Khách `/buy` → QR theo `BANK_*` hoặc ảnh; bạn duyệt bill + `/gencode`
 
 ### Bot + vietqr-pay (auto sau CK)
 
-Trong **Jarvis** `.env`:
+Trong **TungDevAI** `.env`:
 
 ```env
 VIETQR_PAY_URL=http://127.0.0.1:3000
@@ -169,7 +169,7 @@ docker run -d --name vietqr-pay --restart unless-stopped \
   vietqr-pay
 ```
 
-Hoặc dùng `docker-compose.full.yml` trong thư mục Jarvis (bot + pay cùng mạng).
+Hoặc dùng `docker-compose.full.yml` trong thư mục TungDevAI (bot + pay cùng mạng).
 
 ---
 

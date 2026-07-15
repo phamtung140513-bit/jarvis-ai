@@ -2,7 +2,7 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "Run Jarvis",
+      "label": "Run TungDevAI",
       "type": "shell",
       "command": "${workspaceFolder}/.venv/Scripts/python.exe",
       "args": ["launcher.py"],

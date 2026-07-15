@@ -2,7 +2,7 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Jarvis: launcher.py",
+      "name": "TungDevAI: launcher.py",
       "type": "debugpy",
       "request": "launch",
       "program": "${workspaceFolder}/launcher.py",
@@ -13,7 +13,7 @@
       "justMyCode": true
     },
     {
-      "name": "Jarvis: bot.py",
+      "name": "TungDevAI: bot.py",
       "type": "debugpy",
       "request": "launch",
       "program": "${workspaceFolder}/bot.py",
