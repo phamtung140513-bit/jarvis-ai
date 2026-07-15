@@ -275,6 +275,17 @@
 .account-menu-item#btnLogoutTop {
   color: #fca5a5;
 }
+a.account-menu-item {
+  text-decoration: none;
+  color: inherit;
+}
+.account-menu-vip {
+  color: #fbbf24 !important;
+  font-weight: 600;
+}
+.account-menu-vip:hover {
+  background: rgba(251, 191, 36, 0.12) !important;
+}
 
 * { box-sizing: border-box; }
 html, body { height: 100%; }
