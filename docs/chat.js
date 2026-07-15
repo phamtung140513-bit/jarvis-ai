@@ -15,6 +15,64 @@
   const JPEG_Q = 0.82;
 
   const $ = (id) => document.getElementById(id);
+
+  /**
+   * Inject "Gói của bạn" rows even if HTML is old (GitHub Pages cache / old deploy).
+   * Call before reading plan elements.
+   */
+  function ensurePlanDom() {
+    function inject(menuId, planId, nameId, metaId, vipId, logoutId) {
+      const menu = $(menuId);
+      if (!menu) return;
+      let plan = $(planId);
+      if (!plan) {
+        plan = document.createElement("div");
+        plan.className = "account-menu-plan";
+        plan.id = planId;
+        plan.innerHTML =
+          'Gói của bạn: <strong id="' +
+          nameId +
+          '">…</strong>' +
+          '<span class="account-menu-plan-meta" id="' +
+          metaId +
+          '"></span>';
+        const email = menu.querySelector(".account-menu-email") || menu.firstChild;
+        if (email && email.nextSibling) {
+          menu.insertBefore(plan, email.nextSibling);
+        } else if (email) {
+          email.insertAdjacentElement("afterend", plan);
+        } else {
+          menu.insertBefore(plan, menu.firstChild);
+        }
+      }
+      // Fix Vietnamese labels on old HTML
+      const vip = $(vipId);
+      if (vip && /Mua goi/i.test(vip.textContent || "")) {
+        vip.textContent = "Mua gói VIP";
+      }
+      const lo = $(logoutId);
+      if (lo) lo.textContent = "Đăng xuất";
+    }
+    inject(
+      "accountMenu",
+      "accountMenuPlan",
+      "accountMenuPlanName",
+      "accountMenuPlanMeta",
+      "btnVipMenu",
+      "btnLogout"
+    );
+    inject(
+      "accountMenuTop",
+      "accountMenuPlanTop",
+      "accountMenuPlanNameTop",
+      "accountMenuPlanMetaTop",
+      "btnVipMenuTop",
+      "btnLogoutTop"
+    );
+  }
+
+  ensurePlanDom();
+
   const els = {
     app: $("app"),
     sidebar: $("sidebar"),
@@ -57,6 +115,20 @@
     btnVipMenu: $("btnVipMenu"),
     btnVipMenuTop: $("btnVipMenuTop"),
   };
+
+  function refreshElsPlan() {
+    ensurePlanDom();
+    els.accountMenuPlan = $("accountMenuPlan");
+    els.accountMenuPlanTop = $("accountMenuPlanTop");
+    els.accountMenuPlanName = $("accountMenuPlanName");
+    els.accountMenuPlanNameTop = $("accountMenuPlanNameTop");
+    els.accountMenuPlanMeta = $("accountMenuPlanMeta");
+    els.accountMenuPlanMetaTop = $("accountMenuPlanMetaTop");
+    els.btnVipMenu = $("btnVipMenu");
+    els.btnVipMenuTop = $("btnVipMenuTop");
+    els.accountMenuEmail = $("accountMenuEmail");
+    els.accountMenuEmailTop = $("accountMenuEmailTop");
+  }
 
   let googleUser = null;
   let googleSession = localStorage.getItem(LS_GOOGLE) || "";
@@ -201,6 +273,7 @@
   }
 
   function setPlanMenu(user) {
+    refreshElsPlan();
     // Always show plan row when logged in
     const name = user ? planDisplayName(user) : "";
     const meta = user ? planQuotaText(user) : "";
@@ -226,7 +299,8 @@
       }
       b.wrap.hidden = false;
       b.wrap.removeAttribute("hidden");
-      b.wrap.style.display = "";
+      b.wrap.style.display = "block";
+      b.wrap.style.visibility = "visible";
       if (b.nameEl) b.nameEl.textContent = name + (expired ? " (hết hạn)" : "");
       if (b.metaEl) b.metaEl.textContent = meta || "";
     });
@@ -239,6 +313,11 @@
           : "Nâng cấp gói";
     if (els.btnVipMenu) els.btnVipMenu.textContent = vipText;
     if (els.btnVipMenuTop) els.btnVipMenuTop.textContent = vipText;
+    // Sidebar chip: always show Gói Pro / Basic / …
+    if (els.modelChip && user) {
+      els.modelChip.classList.remove("login-cta");
+      els.modelChip.textContent = planLabel(user) || "Gói " + planDisplayName(user);
+    }
   }
 
   async function refreshPlanFromServer() {

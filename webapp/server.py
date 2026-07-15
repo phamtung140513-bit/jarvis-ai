@@ -347,6 +347,17 @@ def create_app() -> FastAPI:
             return None
         return path if path.is_file() else None
 
+    def _file_nocache(path: Path, media_type: str | None = None) -> FileResponse:
+        """Serve docs/* without browser cache (avoid stale plan UI)."""
+        headers = {
+            "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+            "Pragma": "no-cache",
+            "Expires": "0",
+        }
+        if media_type:
+            return FileResponse(path, media_type=media_type, headers=headers)
+        return FileResponse(path, headers=headers)
+
     def _serve_landing():
         """Marketing page. Prefer landing.html (index.html only redirects)."""
         p = _docs_file("landing.html")
@@ -360,11 +371,11 @@ def create_app() -> FastAPI:
     def _serve_chat():
         p = _docs_file("chat.html")
         if p:
-            return FileResponse(p)
+            return _file_nocache(p)
         # legacy fallback
         for candidate in (STATIC_DIR / "index.html",):
             if candidate.is_file():
-                return FileResponse(candidate)
+                return _file_nocache(candidate)
         return HTMLResponse("<h1>Missing chat.html</h1>", status_code=500)
 
     @app.get("/", response_model=None)
@@ -382,38 +393,39 @@ def create_app() -> FastAPI:
 
     @app.get("/chat.html", response_model=None)
     async def chat_page():
-        return _serve_chat()
+        p = _docs_file("chat.html")
+        return _file_nocache(p) if p else HTMLResponse("Not found", status_code=404)
 
     @app.get("/pricing.html", response_model=None)
     async def pricing_page():
         p = _docs_file("pricing.html")
-        return FileResponse(p) if p else HTMLResponse("Not found", status_code=404)
+        return _file_nocache(p) if p else HTMLResponse("Not found", status_code=404)
 
     @app.get("/pricing.css", response_model=None)
     async def pricing_css():
         p = _docs_file("pricing.css")
-        return FileResponse(p, media_type="text/css") if p else HTMLResponse("x", status_code=404)
+        return _file_nocache(p, "text/css") if p else HTMLResponse("x", status_code=404)
 
     @app.get("/login.html", response_model=None)
     async def login_page():
         p = _docs_file("login.html")
-        return FileResponse(p) if p else HTMLResponse("Not found", status_code=404)
+        return _file_nocache(p) if p else HTMLResponse("Not found", status_code=404)
 
     @app.get("/register.html", response_model=None)
     async def register_page():
         p = _docs_file("register.html")
-        return FileResponse(p) if p else HTMLResponse("Not found", status_code=404)
+        return _file_nocache(p) if p else HTMLResponse("Not found", status_code=404)
 
     @app.get("/google-callback.html", response_model=None)
     async def google_callback_page():
         p = _docs_file("google-callback.html")
-        return FileResponse(p) if p else HTMLResponse("Not found", status_code=404)
+        return _file_nocache(p) if p else HTMLResponse("Not found", status_code=404)
 
     @app.get("/auth.js", response_model=None)
     async def auth_js():
         p = _docs_file("auth.js")
         return (
-            FileResponse(p, media_type="application/javascript")
+            _file_nocache(p, "application/javascript")
             if p
             else HTMLResponse("x", status_code=404)
         )
@@ -431,12 +443,16 @@ def create_app() -> FastAPI:
     @app.get("/chat.js", response_model=None)
     async def chat_js():
         p = _docs_file("chat.js")
-        return FileResponse(p, media_type="application/javascript") if p else HTMLResponse("x", status_code=404)
+        return (
+            _file_nocache(p, "application/javascript")
+            if p
+            else HTMLResponse("x", status_code=404)
+        )
 
     @app.get("/chat.css", response_model=None)
     async def chat_css():
         p = _docs_file("chat.css")
-        return FileResponse(p, media_type="text/css") if p else HTMLResponse("x", status_code=404)
+        return _file_nocache(p, "text/css") if p else HTMLResponse("x", status_code=404)
 
     @app.get("/styles.css", response_model=None)
     async def styles_css():
