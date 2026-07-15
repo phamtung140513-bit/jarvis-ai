@@ -288,10 +288,13 @@ def create_app() -> FastAPI:
         return path if path.is_file() else None
 
     def _serve_landing():
-        """Site root = landing (marketing). Chat is /chat.html."""
-        for candidate in (DOCS_DIR / "index.html", DOCS_DIR / "landing.html"):
-            if candidate.is_file():
-                return FileResponse(candidate)
+        """Marketing page. Prefer landing.html (index.html only redirects)."""
+        p = _docs_file("landing.html")
+        if p:
+            return FileResponse(p)
+        p2 = _docs_file("index.html")
+        if p2:
+            return FileResponse(p2)
         return HTMLResponse("<h1>Missing landing</h1>", status_code=500)
 
     def _serve_chat():

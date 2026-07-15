@@ -599,6 +599,15 @@
     const images = pendingImages.slice();
     if ((!text && !images.length) || busy) return;
 
+    const needAuth = !!(
+      serverConfig.auth_required ||
+      serverConfig.google_auth_required
+    );
+    if (needAuth && !isLoggedIn()) {
+      redirectToLogin();
+      return;
+    }
+
     // Images: note for now backend is text; attach as context note
     let payloadText = text;
     if (images.length) {
@@ -804,15 +813,13 @@
     });
   }
 
-  // Boot — only on chat.html (not landing). Redirect login if auth required.
+  // Boot chat UI. KHONG tu nhay login khi mo trang (tranh loop / cache index cu).
+  // Chi bat login khi user gui tin ma server yeu cau auth.
   (async function boot() {
-    // Safety: if this script is ever loaded on landing/root, do not force login
     const path = (location.pathname || "").toLowerCase();
-    const isChatPage =
-      path.indexOf("chat.html") !== -1 ||
-      document.getElementById("app") != null;
-    if (!isChatPage) {
-      console.warn("chat.js: not on chat page, skip auth redirect");
+    // Chi chay full boot tren chat.html — khong bao gio tren landing/root
+    if (path.indexOf("chat.html") === -1 && path.indexOf("/chat") === -1) {
+      console.warn("chat.js: skip boot (not chat.html)");
       return;
     }
 
@@ -826,18 +833,9 @@
       /* server offline — restore may use cache */
     }
 
-    // Require login when server says so (email and/or Google)
-    const needAuth = !!(
-      serverConfig.auth_required ||
-      serverConfig.google_auth_required
-    );
     let ok = await restoreGoogleSession();
     if (!ok) {
-      if (needAuth) {
-        redirectToLogin();
-        return;
-      }
-      // Optional auth: still show login chip, allow browsing
+      // Soft gate: hien chat UI + chip "Dang nhap" — KHONG location.href login
       applyUserUi(null);
       showApp();
       ok = true;
