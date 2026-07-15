@@ -44,7 +44,7 @@
   function showDash() {
     $("gate").classList.add("hidden");
     $("dash").classList.remove("hidden");
-    $("chatLink").href = apiBase() + "/";
+    $("chatLink").href = apiBase() + "/chat.html";
     refreshAll();
   }
 

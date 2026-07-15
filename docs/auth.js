@@ -6,7 +6,7 @@ const TungAuth = (() => {
   const LS_API = "jarvis_api_base_v2";
   const LS_GOOGLE = "jarvis_google_session_v1";
   const LS_GOOGLE_USER = "jarvis_google_user_v1";
-  const CHAT_URL = "index.html";
+  const CHAT_URL = "chat.html"; // web chat (landing is site root index.html)
 
   const $ = (id) => document.getElementById(id);
 

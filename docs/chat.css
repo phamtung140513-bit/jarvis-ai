@@ -215,6 +215,67 @@
   white-space: nowrap;
 }
 
+/* Account menu — Dang xuat chi trong menu bam tai khoan */
+.account-wrap {
+  position: relative;
+  width: 100%;
+}
+.account-wrap.topbar-account {
+  width: auto;
+  flex-shrink: 0;
+}
+.account-menu {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(100% + 8px);
+  background: #2a2a2a;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: .4rem;
+  box-shadow: 0 8px 28px rgba(0,0,0,.45);
+  z-index: 50;
+  min-width: 180px;
+}
+.account-menu-top {
+  left: auto;
+  right: 0;
+  bottom: auto;
+  top: calc(100% + 8px);
+  width: 220px;
+}
+.account-menu-email {
+  font-size: .78rem;
+  color: var(--muted);
+  padding: .5rem .65rem .35rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: .25rem;
+}
+.account-menu-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: .9rem;
+  font-weight: 500;
+  padding: .65rem .75rem;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.account-menu-item:hover {
+  background: rgba(255,255,255,.08);
+}
+.account-menu-item#btnLogout,
+.account-menu-item#btnLogoutTop {
+  color: #fca5a5;
+}
+
 * { box-sizing: border-box; }
 html, body { height: 100%; }
 body {

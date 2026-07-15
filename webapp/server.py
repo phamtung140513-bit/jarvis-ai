@@ -287,20 +287,49 @@ def create_app() -> FastAPI:
             return None
         return path if path.is_file() else None
 
-    @app.get("/", response_model=None)
-    async def index():
-        # Prefer docs/ chat (admin + same-domain API)
-        for candidate in (DOCS_DIR / "index.html", STATIC_DIR / "index.html"):
+    def _serve_landing():
+        """Site root = landing (marketing). Chat is /chat.html."""
+        for candidate in (DOCS_DIR / "index.html", DOCS_DIR / "landing.html"):
             if candidate.is_file():
                 return FileResponse(candidate)
-        return HTMLResponse("<h1>Missing docs/index.html</h1>", status_code=500)
+        return HTMLResponse("<h1>Missing landing</h1>", status_code=500)
+
+    def _serve_chat():
+        p = _docs_file("chat.html")
+        if p:
+            return FileResponse(p)
+        # legacy fallback
+        for candidate in (STATIC_DIR / "index.html",):
+            if candidate.is_file():
+                return FileResponse(candidate)
+        return HTMLResponse("<h1>Missing chat.html</h1>", status_code=500)
+
+    @app.get("/", response_model=None)
+    async def index():
+        return _serve_landing()
+
+    @app.get("/index.html", response_model=None)
+    async def index_html():
+        return _serve_landing()
 
     @app.get("/landing.html", response_model=None)
     async def landing():
-        p = _docs_file("landing.html")
-        if p:
-            return FileResponse(p)
-        return HTMLResponse("Not found", status_code=404)
+        # Keep old URL; same as root landing
+        return _serve_landing()
+
+    @app.get("/chat.html", response_model=None)
+    async def chat_page():
+        return _serve_chat()
+
+    @app.get("/pricing.html", response_model=None)
+    async def pricing_page():
+        p = _docs_file("pricing.html")
+        return FileResponse(p) if p else HTMLResponse("Not found", status_code=404)
+
+    @app.get("/pricing.css", response_model=None)
+    async def pricing_css():
+        p = _docs_file("pricing.css")
+        return FileResponse(p, media_type="text/css") if p else HTMLResponse("x", status_code=404)
 
     @app.get("/login.html", response_model=None)
     async def login_page():

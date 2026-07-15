@@ -2,100 +2,105 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>TungDevAI - Chat</title>
-  <meta name="description" content="TungDevAI coding chat - Dang nhap email hoac Google" />
-  <meta name="theme-color" content="#212121" />
-  <script>
-    (function () {
-      var p = location.pathname;
-      if (p.length > 1 && !p.endsWith("/") && !/\.html?$/i.test(p)) {
-        location.replace(p + "/" + location.search + location.hash);
-      }
-    })();
-  </script>
-  <link rel="icon" href="assets/icon.jpg" type="image/jpeg" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="chat.css?v=14" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TungDevAI — AI chuyên viết code</title>
+  <meta name="description" content="TungDevAI: AI chuyên coding — viết code, review, debug. Web chat + bot Telegram." />
+  <meta name="theme-color" content="#0b0f19" />
+  <link rel="icon" href="./assets/icon.jpg" type="image/jpeg" />
+  <link rel="stylesheet" href="./styles.css" />
 </head>
 <body>
-  <!-- Chat app — login/register are separate pages -->
-  <div class="app" id="app">
-    <aside class="sidebar" id="sidebar">
-      <div class="sidebar-top">
-        <button type="button" class="btn new-chat" id="btnNew" title="Chat moi">
-          <span class="ico">+</span> Chat moi
-        </button>
-        <button type="button" class="icon-btn mobile-only" id="btnCloseSidebar" aria-label="Dong">X</button>
+  <div class="bg-glow" aria-hidden="true"></div>
+
+  <header class="nav">
+    <a class="brand" href="./">
+      <img src="./assets/bot-avatar.jpg" alt="TungDevAI" width="36" height="36" />
+      <span>TungDevAI</span>
+    </a>
+    <nav>
+      <a href="#features">Tính năng</a>
+      <a href="./pricing.html">Bảng giá</a>
+      <a href="./login.html">Đăng nhập</a>
+      <a href="./chat.html">Web chat</a>
+      <a class="btn btn-sm" href="https://t.me/grokapiai_bot" target="_blank" rel="noopener">Mở bot</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <p class="eyebrow">AI CODING · WEB · TELEGRAM</p>
+      <h1>TungDevAI<br /><span>chuyên coder</span></h1>
+      <p class="lead">
+        Senior coding assistant — viết code, review, debug, kiến trúc.
+        Web chat + bot Telegram, tập trung lập trình chứ không tán gẫu.
+      </p>
+      <div class="cta-row">
+        <a class="btn btn-primary" href="./login.html">Đăng nhập →</a>
+        <a class="btn btn-ghost" href="./register.html">Đăng ký</a>
+        <a class="btn btn-ghost" href="https://t.me/grokapiai_bot" target="_blank" rel="noopener">Bot Telegram</a>
       </div>
+    </section>
 
-      <div class="history" id="history" aria-label="Lich su"></div>
-
-      <div class="sidebar-bottom">
-        <a class="side-link" href="landing.html">Trang gioi thieu</a>
-        <a class="side-link" id="tgLink" href="https://t.me/grokapiai_bot" target="_blank" rel="noopener">Bot Telegram</a>
-        <button type="button" class="side-link as-btn" id="btnLogout">Dang xuat</button>
-        <!-- Click when logged out = open login; when logged in = user info -->
-        <button type="button" class="user-chip as-btn" id="userChipBtn" title="Tai khoan">
-          <img src="assets/bot-avatar.jpg" alt="" width="28" height="28" id="userAvatar" />
-          <div class="user-chip-text">
-            <div class="user-name" id="appNameLabel">TungDevAI</div>
-            <div class="user-sub" id="modelChip">Dang nhap</div>
-          </div>
-        </button>
+    <section id="features" class="section">
+      <h2>Tính năng</h2>
+      <div class="grid">
+        <article class="card">
+          <div class="icon">💬</div>
+          <h3>Web chat ChatGPT-style</h3>
+          <p>Sidebar lịch sử, stream trả lời, markdown/code — chạy 100% tĩnh trên GitHub Pages.</p>
+        </article>
+        <article class="card">
+          <div class="icon">🔑</div>
+          <h3>Key trên máy bạn</h3>
+          <p>API key lưu <code>localStorage</code> trình duyệt, không commit lên GitHub.</p>
+        </article>
+        <article class="card">
+          <div class="icon">✈️</div>
+          <h3>Bot Telegram</h3>
+          <p>Bán gói Basic/Pro/Business, QR VietQR, <code>/activate</code>, agent <code>/build</code>.</p>
+        </article>
+        <article class="card">
+          <div class="icon">🔧</div>
+          <h3>Agents</h3>
+          <p><code>/plan</code> <code>/code</code> <code>/review</code> <code>/debug</code> <code>/build</code> trên Telegram.</p>
+        </article>
+        <article class="card">
+          <div class="icon">🧠</div>
+          <h3>Dạy AI (owner)</h3>
+          <p>Chủ bot <code>/teach</code> luật toàn cục — khách không sửa được.</p>
+        </article>
+        <article class="card">
+          <div class="icon">💻</div>
+          <h3>CLI Windows</h3>
+          <p><code>tungdev.cmd</code> — chat agent trong terminal.</p>
+        </article>
       </div>
-    </aside>
+    </section>
 
-    <div class="sidebar-backdrop" id="backdrop" hidden></div>
+    <section id="pricing" class="section">
+      <h2>Bảng giá</h2>
+      <p class="section-sub">Trang bán riêng — 3 gói kiểu SuperGrok, thanh toán qua bot Telegram.</p>
+      <p style="text-align:center;margin-top:1rem">
+        <a class="btn btn-primary" href="./pricing.html">Xem bảng giá đầy đủ →</a>
+      </p>
+    </section>
 
-    <main class="main">
-      <header class="topbar">
-        <button type="button" class="icon-btn mobile-only" id="btnOpenSidebar" aria-label="Menu">=</button>
-        <div class="topbar-title">
-          <span id="chatTitle">TungDevAI</span>
-          <span class="dot" id="statusDot" title="Trang thai"></span>
-        </div>
-        <button type="button" class="user-pill as-btn" id="userPill" title="Tai khoan">
-          <img id="userPillImg" alt="" width="24" height="24" src="assets/bot-avatar.jpg" />
-          <span id="userPillName">Dang nhap</span>
-        </button>
-      </header>
+    <section class="section cta-band">
+      <h2>Bắt đầu ngay</h2>
+      <p>TungDevAI — AI chuyên code. Mở web chat hoặc bot Telegram.</p>
+      <a class="btn btn-primary btn-lg" href="./login.html">Đăng nhập</a>
+      <a class="btn btn-ghost btn-lg" href="./register.html">Đăng ký</a>
+      <p class="support">Support: <a href="https://t.me/usertungpham" target="_blank" rel="noopener">@usertungpham</a></p>
+    </section>
+  </main>
 
-      <section class="messages" id="messages" aria-live="polite">
-        <div class="welcome" id="welcome">
-          <img class="welcome-avatar" src="assets/bot-avatar.jpg" alt="TungDevAI" />
-          <h1>TungDevAI</h1>
-          <p>Senior coding assistant. Xin chao <strong id="welcomeName">ban</strong>!</p>
-          <div class="suggestions">
-            <button type="button" data-q="Viet API FastAPI CRUD user (SQLAlchemy + Pydantic), co error handling">FastAPI CRUD</button>
-            <button type="button" data-q="Review code Python ve bug va security (toi se paste code)">Code review</button>
-            <button type="button" data-q="Giai thich traceback va dua patch (toi se paste log)">Debug</button>
-            <button type="button" data-q="Thiet ke kien truc bot Telegram SaaS multi-user">Kien truc bot</button>
-          </div>
-        </div>
-      </section>
-
-      <div class="composer-wrap">
-        <div class="attach-preview" id="attachPreview" hidden></div>
-        <form class="composer" id="form">
-          <input type="file" id="fileImage" accept="image/*" multiple hidden />
-          <div class="plus-wrap" id="plusWrap">
-            <button type="button" class="plus-btn" id="btnPlus" title="Anh tu may" aria-label="Them anh">
-              <span class="plus-glyph">+</span>
-            </button>
-          </div>
-          <textarea id="input" rows="1" placeholder="Nhan tin cho TungDevAI..." autocomplete="off" enterkeyhint="send"></textarea>
-          <button type="submit" id="btnSend" aria-label="Gui" title="Gui">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
-          </button>
-        </form>
-        <p class="disclaimer">Dang nhap email hoac Google — giong ChatGPT / Claude.</p>
-      </div>
-    </main>
-  </div>
-
-  <script src="chat.js?v=14"></script>
+  <footer class="footer">
+    <div>
+      <img src="./assets/bot-avatar.jpg" alt="" width="28" height="28" />
+      <span>TungDevAI</span>
+    </div>
+    <p><a href="./chat.html">Chat</a> · <a href="./">Giới thiệu</a> · GitHub Pages</p>
+    <p class="fine">Key API chỉ lưu trên trình duyệt. AI third-party · Không cam kết uptime 100%.</p>
+  </footer>
 </body>
 </html>

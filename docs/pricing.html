@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Bảng giá — TungDevAI</title>
+  <meta name="description" content="Gói TungDevAI: Lite, Pro, Business. AI chuyên coder — web + Telegram." />
+  <meta name="theme-color" content="#0a0a0c" />
+  <link rel="icon" href="./assets/icon.jpg" type="image/jpeg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./pricing.css?v=2" />
+</head>
+<body class="pricing-page">
+  <header class="p-nav">
+    <a class="p-brand" href="./">
+      <img src="./assets/bot-avatar.jpg" alt="" width="32" height="32" />
+      <span>TungDevAI</span>
+    </a>
+    <nav>
+      <a href="./">Trang chủ</a>
+      <a href="./pricing.html" class="active">Bảng giá</a>
+      <a href="./login.html">Đăng nhập</a>
+      <a class="p-btn p-btn-sm" href="https://t.me/grokapiai_bot" target="_blank" rel="noopener">Mở bot</a>
+    </nav>
+  </header>
+
+  <main class="p-main">
+    <div class="p-hero">
+      <img class="p-logo-mark" src="./assets/bot-avatar.jpg" alt="TungDevAI" width="56" height="56" />
+      <h1>TungDevAI</h1>
+      <p class="p-promo">
+        AI chuyên <strong>coder</strong> — web chat + bot Telegram
+      </p>
+      <p class="p-sub">Chọn gói phù hợp. Thanh toán qua bot · kích hoạt bằng mã.</p>
+
+      <div class="p-tabs" role="tablist">
+        <button type="button" class="p-tab active" data-tab="personal" id="tabPersonal">Cá nhân</button>
+        <button type="button" class="p-tab" data-tab="biz" id="tabBiz">Doanh nghiệp</button>
+      </div>
+    </div>
+
+    <!-- Cá nhân: 3 gói -->
+    <section class="p-grid" id="gridPersonal" aria-label="Goi ca nhan">
+      <article class="p-card">
+        <h2>TungDev Lite</h2>
+        <p class="p-price"><span class="num">49.000</span><span class="unit">đ<span>/tháng</span></span></p>
+        <p class="p-desc">Tiếp tục code với quyền truy cập cơ bản</p>
+        <a class="p-cta p-cta-muted" href="https://t.me/grokapiai_bot" target="_blank" rel="noopener">Nâng cấp lên Lite</a>
+        <ul class="p-feats">
+          <li><span class="ico">💬</span> 100 tin nhắn / ngày</li>
+          <li><span class="ico">🧠</span> AI senior coding assistant</li>
+          <li><span class="ico">🌐</span> Web chat + bot Telegram</li>
+          <li><span class="ico">📝</span> Markdown / code highlight</li>
+          <li><span class="ico">🔑</span> Đăng nhập email hoặc Google</li>
+        </ul>
+      </article>
+
+      <article class="p-card p-card-featured">
+        <h2>TungDev Pro</h2>
+        <p class="p-price"><span class="num">99.000</span><span class="unit">đ<span>/tháng</span></span></p>
+        <p class="p-desc">Câu trả lời sâu hơn, quota cao hơn — cho freelancer</p>
+        <a class="p-cta p-cta-primary" href="https://t.me/grokapiai_bot" target="_blank" rel="noopener">Nâng cấp lên Pro</a>
+        <ul class="p-feats">
+          <li><span class="ico">⚡</span> 500 tin nhắn / ngày</li>
+          <li><span class="ico">🔧</span> Agent: plan · code · review · debug</li>
+          <li><span class="ico">📂</span> Project notes &amp; memory dài hơn</li>
+          <li><span class="ico">🖼️</span> Gửi ảnh kèm câu hỏi</li>
+          <li><span class="ico">💬</span> Ưu tiên hỗ trợ qua Telegram</li>
+          <li><span class="ico">✨</span> Mọi thứ trong Lite</li>
+        </ul>
+      </article>
+
+      <article class="p-card">
+        <div class="p-badge">Phổ biến team</div>
+        <h2>TungDev Business</h2>
+        <p class="p-price"><span class="num">199.000</span><span class="unit">đ<span>/tháng</span></span></p>
+        <p class="p-desc">Không giới hạn tin — shop / agency / team</p>
+        <a class="p-cta p-cta-primary" href="https://t.me/grokapiai_bot" target="_blank" rel="noopener">Nhận gói Business</a>
+        <ul class="p-feats">
+          <li><span class="ico">∞</span> Không giới hạn tin / ngày</li>
+          <li><span class="ico">🏢</span> Mọi thứ trong Pro</li>
+          <li><span class="ico">👥</span> Phù hợp multi-user / white-label</li>
+          <li><span class="ico">📊</span> Ưu tiên quota &amp; hỗ trợ</li>
+          <li><span class="ico">🛡️</span> Contact riêng: @usertungpham</li>
+        </ul>
+      </article>
+    </section>
+
+    <!-- Doanh nghiệp: nhấn Business + custom -->
+    <section class="p-grid hidden" id="gridBiz" aria-label="Goi doanh nghiep">
+      <article class="p-card p-card-featured p-card-wide">
+        <div class="p-badge">Doanh nghiệp</div>
+        <h2>TungDev Business+</h2>
+        <p class="p-price"><span class="num">199.000+</span><span class="unit">đ<span>/tháng</span></span></p>
+        <p class="p-desc">Gói không giới hạn + tư vấn triển khai bot / web cho team</p>
+        <a class="p-cta p-cta-primary" href="https://t.me/usertungpham" target="_blank" rel="noopener">Liên hệ sales</a>
+        <ul class="p-feats p-feats-2col">
+          <li><span class="ico">∞</span> Unlimited messages</li>
+          <li><span class="ico">🤖</span> Bot Telegram multi-user</li>
+          <li><span class="ico">🌐</span> Web chat brand riêng</li>
+          <li><span class="ico">💳</span> QR / VietQR thanh toán</li>
+          <li><span class="ico">📦</span> White-label &amp; license</li>
+          <li><span class="ico">🛠️</span> Hỗ trợ setup VPS / domain</li>
+        </ul>
+      </article>
+      <article class="p-card">
+        <h2>Trial</h2>
+        <p class="p-price"><span class="num">0</span><span class="unit">đ<span>/ 3 ngày</span></span></p>
+        <p class="p-desc">Dùng thử trước khi mua</p>
+        <a class="p-cta p-cta-muted" href="https://t.me/grokapiai_bot" target="_blank" rel="noopener">Bắt đầu Trial</a>
+        <ul class="p-feats">
+          <li><span class="ico">🎁</span> 20 tin / ngày · 3 ngày</li>
+          <li><span class="ico">🧪</span> Test web + bot</li>
+          <li><span class="ico">➡️</span> Nâng cấp bất cứ lúc nào</li>
+        </ul>
+      </article>
+    </section>
+
+    <section class="p-faq">
+      <h2>Câu hỏi nhanh</h2>
+      <div class="p-faq-grid">
+        <div>
+          <h3>Thanh toán thế nào?</h3>
+          <p>Mở bot Telegram → chọn gói → chuyển khoản / QR. Admin gửi mã → <code>/activate MÃ</code>.</p>
+        </div>
+        <div>
+          <h3>Web chat có cần gói không?</h3>
+          <p>Web chat dùng backend của bạn (server 7860). Gói SaaS chủ yếu cho bot multi-user &amp; quota.</p>
+        </div>
+        <div>
+          <h3>Đổi gói / gia hạn?</h3>
+          <p>Nhắn <a href="https://t.me/usertungpham" target="_blank" rel="noopener">@usertungpham</a> hoặc mở bot.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="p-foot">
+    <div>
+      <img src="./assets/bot-avatar.jpg" alt="" width="24" height="24" />
+      <span>TungDevAI</span>
+    </div>
+    <p>
+      <a href="./">Trang chủ</a> ·
+      <a href="./login.html">Đăng nhập</a> ·
+      <a href="./register.html">Đăng ký</a> ·
+      <a href="https://t.me/grokapiai_bot" target="_blank" rel="noopener">Bot</a>
+    </p>
+    <p class="fine">Support: @usertungpham</p>
+  </footer>
+
+  <script>
+    (function () {
+      var personal = document.getElementById("gridPersonal");
+      var biz = document.getElementById("gridBiz");
+      var tabP = document.getElementById("tabPersonal");
+      var tabB = document.getElementById("tabBiz");
+      function show(which) {
+        var isP = which === "personal";
+        personal.classList.toggle("hidden", !isP);
+        biz.classList.toggle("hidden", isP);
+        tabP.classList.toggle("active", isP);
+        tabB.classList.toggle("active", !isP);
+      }
+      tabP.addEventListener("click", function () { show("personal"); });
+      tabB.addEventListener("click", function () { show("biz"); });
+    })();
+  </script>
+</body>
+</html>

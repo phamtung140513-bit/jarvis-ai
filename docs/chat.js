@@ -27,6 +27,7 @@
     send: $("btnSend"),
     btnNew: $("btnNew"),
     btnLogout: $("btnLogout"),
+    btnLogoutTop: $("btnLogoutTop"),
     btnOpenSidebar: $("btnOpenSidebar"),
     btnCloseSidebar: $("btnCloseSidebar"),
     btnPlus: $("btnPlus"),
@@ -43,6 +44,10 @@
     userPillImg: $("userPillImg"),
     userPillName: $("userPillName"),
     welcomeName: $("welcomeName"),
+    accountMenu: $("accountMenu"),
+    accountMenuTop: $("accountMenuTop"),
+    accountMenuEmail: $("accountMenuEmail"),
+    accountMenuEmailTop: $("accountMenuEmailTop"),
   };
 
   let googleUser = null;
@@ -100,12 +105,12 @@
 
   /** Separate pages: login.html / register.html */
   function redirectToLogin() {
-    const next = encodeURIComponent("index.html");
+    const next = encodeURIComponent("chat.html");
     location.href = "login.html?next=" + next;
   }
 
   function redirectToRegister() {
-    const next = encodeURIComponent("index.html");
+    const next = encodeURIComponent("chat.html");
     location.href = "register.html?next=" + next;
   }
 
@@ -159,6 +164,7 @@
   }
 
   function logoutGoogle() {
+    closeAccountMenus();
     if (googleSession) {
       fetch(apiBase() + "/api/auth/logout", {
         method: "POST",
@@ -206,9 +212,46 @@
     }
   }
 
+  function closeAccountMenus() {
+    if (els.accountMenu) els.accountMenu.classList.add("hidden");
+    if (els.accountMenuTop) els.accountMenuTop.classList.add("hidden");
+    if (els.userChipBtn) els.userChipBtn.setAttribute("aria-expanded", "false");
+    if (els.userPill) els.userPill.setAttribute("aria-expanded", "false");
+  }
+
+  function openAccountMenu(which) {
+    closeAccountMenus();
+    const email =
+      (googleUser && (googleUser.email || googleUser.name)) || "Tai khoan";
+    if (which === "side" && els.accountMenu) {
+      if (els.accountMenuEmail) els.accountMenuEmail.textContent = email;
+      els.accountMenu.classList.remove("hidden");
+      if (els.userChipBtn) els.userChipBtn.setAttribute("aria-expanded", "true");
+    }
+    if (which === "top" && els.accountMenuTop) {
+      if (els.accountMenuEmailTop) els.accountMenuEmailTop.textContent = email;
+      els.accountMenuTop.classList.remove("hidden");
+      if (els.userPill) els.userPill.setAttribute("aria-expanded", "true");
+    }
+  }
+
+  function onAccountClick(which, e) {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    if (!isLoggedIn()) {
+      redirectToLogin();
+      return;
+    }
+    const menu = which === "top" ? els.accountMenuTop : els.accountMenu;
+    const open = menu && !menu.classList.contains("hidden");
+    if (open) closeAccountMenus();
+    else openAccountMenu(which);
+  }
+
   function openLoginFromChip() {
-    if (isLoggedIn()) return;
-    redirectToLogin();
+    onAccountClick("side");
   }
 
   async function loadPublicConfig() {
@@ -720,13 +763,46 @@
   });
 
   els.btnNew.addEventListener("click", newChat);
-  if (els.btnLogout) els.btnLogout.addEventListener("click", logoutGoogle);
+  if (els.btnLogout) {
+    els.btnLogout.addEventListener("click", function (e) {
+      e.stopPropagation();
+      logoutGoogle();
+    });
+  }
+  if (els.btnLogoutTop) {
+    els.btnLogoutTop.addEventListener("click", function (e) {
+      e.stopPropagation();
+      logoutGoogle();
+    });
+  }
   if (els.btnOpenSidebar) els.btnOpenSidebar.addEventListener("click", openSidebar);
   if (els.btnCloseSidebar) els.btnCloseSidebar.addEventListener("click", closeSidebar);
   if (els.backdrop) els.backdrop.addEventListener("click", closeSidebar);
 
-  if (els.userChipBtn) els.userChipBtn.addEventListener("click", openLoginFromChip);
-  if (els.userPill) els.userPill.addEventListener("click", openLoginFromChip);
+  // Bam vao tai khoan → menu (Dang xuat nam trong menu, khong o ngoai)
+  if (els.userChipBtn) {
+    els.userChipBtn.addEventListener("click", function (e) {
+      onAccountClick("side", e);
+    });
+  }
+  if (els.userPill) {
+    els.userPill.addEventListener("click", function (e) {
+      onAccountClick("top", e);
+    });
+  }
+  document.addEventListener("click", function () {
+    closeAccountMenus();
+  });
+  if (els.accountMenu) {
+    els.accountMenu.addEventListener("click", function (e) {
+      e.stopPropagation();
+    });
+  }
+  if (els.accountMenuTop) {
+    els.accountMenuTop.addEventListener("click", function (e) {
+      e.stopPropagation();
+    });
+  }
 
   // Boot — redirect to login.html if auth required
   (async function boot() {
