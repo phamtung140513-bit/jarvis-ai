@@ -804,8 +804,18 @@
     });
   }
 
-  // Boot — redirect to login.html if auth required
+  // Boot — only on chat.html (not landing). Redirect login if auth required.
   (async function boot() {
+    // Safety: if this script is ever loaded on landing/root, do not force login
+    const path = (location.pathname || "").toLowerCase();
+    const isChatPage =
+      path.indexOf("chat.html") !== -1 ||
+      document.getElementById("app") != null;
+    if (!isChatPage) {
+      console.warn("chat.js: not on chat page, skip auth redirect");
+      return;
+    }
+
     await loadPublicConfig();
     try {
       const r = await fetch(apiBase() + "/api/config", { cache: "no-store" });
