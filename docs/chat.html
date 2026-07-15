@@ -18,7 +18,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="chat.css?v=25" />
+  <link rel="stylesheet" href="chat.css?v=26" />
 </head>
 <body>
   <div class="app" id="app">
@@ -45,7 +45,11 @@
           </button>
           <div class="account-menu hidden" id="accountMenu" role="menu">
             <div class="account-menu-email" id="accountMenuEmail"></div>
-            <a class="account-menu-item account-menu-vip" href="pricing.html" role="menuitem">Mua gói VIP</a>
+            <div class="account-menu-plan" id="accountMenuPlan" hidden>
+              Gói của bạn: <strong id="accountMenuPlanName">—</strong>
+              <span class="account-menu-plan-meta" id="accountMenuPlanMeta"></span>
+            </div>
+            <a class="account-menu-item account-menu-vip" id="btnVipMenu" href="pricing.html" role="menuitem">Mua gói VIP</a>
             <button type="button" class="account-menu-item" id="btnLogout" role="menuitem">Đăng xuất</button>
           </div>
         </div>
@@ -68,7 +72,11 @@
           </button>
           <div class="account-menu account-menu-top hidden" id="accountMenuTop" role="menu">
             <div class="account-menu-email" id="accountMenuEmailTop"></div>
-            <a class="account-menu-item account-menu-vip" href="pricing.html" role="menuitem">Mua gói VIP</a>
+            <div class="account-menu-plan" id="accountMenuPlanTop" hidden>
+              Gói của bạn: <strong id="accountMenuPlanNameTop">—</strong>
+              <span class="account-menu-plan-meta" id="accountMenuPlanMetaTop"></span>
+            </div>
+            <a class="account-menu-item account-menu-vip" id="btnVipMenuTop" href="pricing.html" role="menuitem">Mua gói VIP</a>
             <button type="button" class="account-menu-item" id="btnLogoutTop" role="menuitem">Đăng xuất</button>
           </div>
         </div>
@@ -106,6 +114,6 @@
     </main>
   </div>
 
-  <script src="chat.js?v=25"></script>
+  <script src="chat.js?v=26"></script>
 </body>
 </html>

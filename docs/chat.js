@@ -48,6 +48,14 @@
     accountMenuTop: $("accountMenuTop"),
     accountMenuEmail: $("accountMenuEmail"),
     accountMenuEmailTop: $("accountMenuEmailTop"),
+    accountMenuPlan: $("accountMenuPlan"),
+    accountMenuPlanTop: $("accountMenuPlanTop"),
+    accountMenuPlanName: $("accountMenuPlanName"),
+    accountMenuPlanNameTop: $("accountMenuPlanNameTop"),
+    accountMenuPlanMeta: $("accountMenuPlanMeta"),
+    accountMenuPlanMetaTop: $("accountMenuPlanMetaTop"),
+    btnVipMenu: $("btnVipMenu"),
+    btnVipMenuTop: $("btnVipMenuTop"),
   };
 
   let googleUser = null;
@@ -143,17 +151,82 @@
     }
   }
 
-  function planLabel(user) {
+  function planDisplayName(user) {
     if (!user) return "";
-    const name = user.plan_name || user.plan_id || "";
-    if (!name) return "";
+    const raw = (user.plan_name || user.plan_id || "").toString().trim();
+    if (!raw) return "";
+    // Normalize ids → pretty labels
+    const map = {
+      trial: "Trial",
+      basic: "Basic",
+      pro: "Pro",
+      business: "Business",
+      owner: "Owner",
+    };
+    const key = raw.toLowerCase();
+    if (map[key]) return map[key];
+    // Capitalize first letter if looks like id
+    return raw.charAt(0).toUpperCase() + raw.slice(1);
+  }
+
+  function planQuotaText(user) {
+    if (!user) return "";
     const rem = user.remaining_today;
     const lim = user.daily_limit;
+    if (lim === -1) return "Không giới hạn tin / ngày";
     if (lim != null && lim >= 0 && rem != null) {
-      return name + " · " + rem + "/" + lim + " tin";
+      return "Còn " + rem + "/" + lim + " tin hôm nay";
     }
-    if (lim === -1) return name + " · ∞";
-    return String(name);
+    return "";
+  }
+
+  function planLabel(user) {
+    const name = planDisplayName(user);
+    if (!name) return "";
+    const q = planQuotaText(user);
+    if (q && user.daily_limit === -1) return "Gói " + name + " · ∞";
+    if (user.remaining_today != null && user.daily_limit != null && user.daily_limit >= 0) {
+      return "Gói " + name + " · " + user.remaining_today + "/" + user.daily_limit;
+    }
+    return "Gói " + name;
+  }
+
+  function setPlanMenu(user) {
+    const name = planDisplayName(user);
+    const meta = planQuotaText(user);
+    const expired = !!(user && user.plan_expired);
+    const blocks = [
+      {
+        wrap: els.accountMenuPlan,
+        nameEl: els.accountMenuPlanName,
+        metaEl: els.accountMenuPlanMeta,
+      },
+      {
+        wrap: els.accountMenuPlanTop,
+        nameEl: els.accountMenuPlanNameTop,
+        metaEl: els.accountMenuPlanMetaTop,
+      },
+    ];
+    blocks.forEach(function (b) {
+      if (!b.wrap) return;
+      if (!name) {
+        b.wrap.hidden = true;
+        return;
+      }
+      b.wrap.hidden = false;
+      if (b.nameEl) b.nameEl.textContent = name + (expired ? " (hết hạn)" : "");
+      if (b.metaEl) b.metaEl.textContent = meta || "";
+    });
+    // VIP CTA: trial/expired → mua; paid → nâng cấp
+    const pid = ((user && user.plan_id) || "trial").toLowerCase();
+    const vipText =
+      !user || pid === "trial" || expired
+        ? "Mua gói VIP"
+        : pid === "business"
+          ? "Gia hạn / liên hệ"
+          : "Nâng cấp gói";
+    if (els.btnVipMenu) els.btnVipMenu.textContent = vipText;
+    if (els.btnVipMenuTop) els.btnVipMenuTop.textContent = vipText;
   }
 
   function applyUserUi(user) {
@@ -166,6 +239,7 @@
     if (!user) {
       if (els.accountMenuEmail) els.accountMenuEmail.textContent = "";
       if (els.accountMenuEmailTop) els.accountMenuEmailTop.textContent = "";
+      setPlanMenu(null);
       refreshUserChip();
       return;
     }
@@ -181,10 +255,11 @@
       if (els.userAvatar) els.userAvatar.src = "assets/bot-avatar.jpg";
     }
     const emailLine = user.email || name;
+    // Menu: email riêng, gói riêng
+    if (els.accountMenuEmail) els.accountMenuEmail.textContent = emailLine;
+    if (els.accountMenuEmailTop) els.accountMenuEmailTop.textContent = emailLine;
+    setPlanMenu(user);
     const plan = planLabel(user);
-    const sub = plan ? emailLine + "\n" + plan : emailLine;
-    if (els.accountMenuEmail) els.accountMenuEmail.textContent = sub;
-    if (els.accountMenuEmailTop) els.accountMenuEmailTop.textContent = sub;
     if (els.userPill) els.userPill.title = plan ? emailLine + " · " + plan : emailLine;
     if (els.modelChip && isLoggedIn()) {
       els.modelChip.classList.remove("login-cta");
@@ -940,6 +1015,20 @@
       persistChats();
       renderHistory();
       setStatus(true);
+      // Refresh quota / plan chip after each message
+      if (googleSession) {
+        fetch(apiBase() + "/api/auth/me", {
+          headers: { "X-User-Session": googleSession },
+          cache: "no-store",
+        })
+          .then(function (r) {
+            return r.ok ? r.json() : null;
+          })
+          .then(function (j) {
+            if (j && j.user) applyUserUi(j.user);
+          })
+          .catch(function () {});
+      }
     } catch (err) {
       contentEl.parentElement.parentElement.classList.remove("typing");
       setAssistantHtml(

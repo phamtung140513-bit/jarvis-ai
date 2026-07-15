@@ -251,8 +251,29 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+.account-menu-plan {
+  font-size: .82rem;
+  color: var(--text);
+  padding: .35rem .65rem .55rem;
   border-bottom: 1px solid var(--border);
   margin-bottom: .25rem;
+  line-height: 1.35;
+}
+.account-menu-plan strong {
+  color: #fbbf24;
+  font-weight: 700;
+  text-transform: none;
+}
+.account-menu-plan-meta {
+  display: block;
+  margin-top: .2rem;
+  font-size: .75rem;
+  color: var(--muted);
+  font-weight: 500;
+}
+.account-menu-plan[hidden] {
+  display: none !important;
 }
 .account-menu-item {
   display: block;
