@@ -145,6 +145,17 @@ MODEL_PRESETS: dict[str, dict[str, str]] = {
         "model": "openai/gpt-4o",
         "label": "OpenRouter GPT-4o (rất mạnh, trả phí)",
     },
+    # NVIDIA NIM — cần NVIDIA_API_KEY + AI_PROVIDER=nvidia
+    "nvidia": {
+        "provider": "nvidia",
+        "model": "openai/gpt-oss-20b",
+        "label": "NVIDIA NIM gpt-oss-20b",
+    },
+    "gpt-oss": {
+        "provider": "nvidia",
+        "model": "openai/gpt-oss-20b",
+        "label": "NVIDIA NIM gpt-oss-20b (alias)",
+    },
 }
 
 

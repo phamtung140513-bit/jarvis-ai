@@ -126,13 +126,25 @@ class GrokClient:
 
         data = resp.json()
         try:
-            content = data["choices"][0]["message"]["content"]
+            msg = data["choices"][0]["message"]
         except (KeyError, IndexError, TypeError) as exc:
             raise GrokError(f"Unexpected response shape: {data!r}") from exc
 
-        if not isinstance(content, str):
-            content = str(content)
-        return content.strip()
+        # NVIDIA / some OSS models return reasoning_content separately
+        content = msg.get("content") if isinstance(msg, dict) else None
+        reasoning = msg.get("reasoning_content") if isinstance(msg, dict) else None
+        if content is None and not isinstance(msg, dict):
+            content = getattr(msg, "content", None)
+            reasoning = getattr(msg, "reasoning_content", None)
+
+        text = content if isinstance(content, str) and content.strip() else ""
+        if not text and isinstance(reasoning, str) and reasoning.strip():
+            text = reasoning
+        if not isinstance(text, str):
+            text = str(text or "")
+        if not text.strip():
+            raise GrokError(f"Empty assistant content: {data!r}")
+        return text.strip()
 
     async def chat_stream(
         self,
@@ -165,7 +177,11 @@ class GrokClient:
                         break
                     try:
                         chunk = json.loads(data)
-                        delta = chunk["choices"][0].get("delta", {}).get("content")
+                        delta_obj = chunk["choices"][0].get("delta", {}) or {}
+                        # Prefer content; fall back to reasoning_content (NVIDIA)
+                        delta = delta_obj.get("content") or delta_obj.get(
+                            "reasoning_content"
+                        )
                         if delta:
                             yield delta
                     except (json.JSONDecodeError, KeyError, IndexError, TypeError):

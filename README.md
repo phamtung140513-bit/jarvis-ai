@@ -34,7 +34,7 @@ Chi tiết: [docs/README.md](docs/README.md) · [docs/HUONG_DAN_GITHUB_PAGES.md]
 
 ## Core
 
-- Chat AI (Groq free / OpenRouter / xAI / Ollama)
+- Chat AI (Groq free / OpenRouter / xAI / **NVIDIA NIM** / Ollama)
 - Multi-user admin + SQLite users/usage
 - **Memory hybrid**: RAM + SQLite (`conversation_messages`) — sống qua restart
 - **Project notes**: `/project` · `/projects`

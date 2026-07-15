@@ -28,6 +28,12 @@ PROVIDER_DEFAULTS: dict[str, dict[str, str]] = {
         "model": "grok-3-mini",
         "label": "xAI Grok",
     },
+    # NVIDIA NIM — OpenAI-compatible (build.nvidia.com / integrate.api.nvidia.com)
+    "nvidia": {
+        "base_url": "https://integrate.api.nvidia.com/v1",
+        "model": "openai/gpt-oss-20b",
+        "label": "NVIDIA NIM (gpt-oss-20b)",
+    },
     "ollama": {
         "base_url": "http://127.0.0.1:11434/v1",
         "model": "llama3.2",
@@ -82,7 +88,7 @@ class Settings(BaseSettings):
     software_license_key: str = Field("", alias="SOFTWARE_LICENSE_KEY")
     require_software_license: bool = Field(False, alias="REQUIRE_SOFTWARE_LICENSE")
 
-    # Provider: groq | openrouter | xai | ollama
+    # Provider: groq | openrouter | xai | nvidia | ollama
     ai_provider: str = Field("groq", alias="AI_PROVIDER")
 
     # Preferred single key (works for any provider)
@@ -91,6 +97,7 @@ class Settings(BaseSettings):
     groq_api_key: str = Field("", alias="GROQ_API_KEY")
     openrouter_api_key: str = Field("", alias="OPENROUTER_API_KEY")
     xai_api_key: str = Field("", alias="XAI_API_KEY")
+    nvidia_api_key: str = Field("", alias="NVIDIA_API_KEY")
 
     # Optional overrides (empty = use provider default)
     ai_base_url: str = Field("", alias="AI_BASE_URL")
@@ -158,7 +165,8 @@ class Settings(BaseSettings):
         if not self.resolved_api_key:
             raise ValueError(
                 f"Thiếu API key cho provider '{self.provider}'. "
-                "Điền AI_API_KEY (hoặc GROQ_API_KEY / OPENROUTER_API_KEY / XAI_API_KEY) trong .env"
+                "Điền AI_API_KEY (hoặc GROQ_API_KEY / OPENROUTER_API_KEY / "
+                "XAI_API_KEY / NVIDIA_API_KEY) trong .env"
             )
         if not self.owner_ids and not self.allowed_ids:
             raise ValueError(
@@ -190,20 +198,24 @@ class Settings(BaseSettings):
 
     @property
     def resolved_api_key(self) -> str:
-        """Key for the active provider only (no cross-provider fallback)."""
+        """Key for the active provider (provider-specific first, then AI_API_KEY)."""
         p = self.provider
         if p == "ollama":
             return self.ai_api_key.strip() or "ollama"
-        # Prefer generic AI_API_KEY when set
-        if self.ai_api_key.strip():
-            return self.ai_api_key.strip()
+        # Prefer the key that matches the active provider so switching
+        # AI_PROVIDER=nvidia does not accidentally send a Groq gsk_ key.
+        specific = ""
         if p == "groq":
-            return self.groq_api_key.strip()
-        if p == "openrouter":
-            return self.openrouter_api_key.strip()
-        if p == "xai":
-            return self.xai_api_key.strip()
-        return ""
+            specific = self.groq_api_key.strip()
+        elif p == "openrouter":
+            specific = self.openrouter_api_key.strip()
+        elif p == "xai":
+            specific = self.xai_api_key.strip()
+        elif p == "nvidia":
+            specific = self.nvidia_api_key.strip()
+        if specific:
+            return specific
+        return self.ai_api_key.strip()
 
     @property
     def resolved_base_url(self) -> str:
