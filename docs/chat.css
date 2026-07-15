@@ -565,20 +565,73 @@ button, input, textarea, select {
 }
 .msg .content p { margin: 0 0 0.75rem; }
 .msg .content p:last-child { margin-bottom: 0; }
+.msg .content .code-block {
+  margin: 0.75rem 0 !important;
+  border: 1px solid rgba(255,255,255,.14) !important;
+  border-radius: 12px !important;
+  overflow: hidden !important;
+  background: #0d0d0d !important;
+  display: block !important;
+  max-width: 100%;
+}
+.msg .content .code-block-bar {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 0.5rem;
+  padding: 0.45rem 0.7rem 0.45rem 0.9rem !important;
+  background: #222226 !important;
+  border-bottom: 1px solid rgba(255,255,255,.1) !important;
+  min-height: 36px;
+}
+.msg .content .code-lang {
+  font-size: 0.78rem !important;
+  font-weight: 600 !important;
+  color: #a1a1aa !important;
+  text-transform: lowercase;
+  font-family: var(--mono);
+}
+.msg .content .code-copy {
+  display: inline-flex !important;
+  align-items: center;
+  border: 1px solid rgba(255,255,255,.18) !important;
+  background: #3f3f46 !important;
+  color: #fafafa !important;
+  font: inherit;
+  font-size: 0.78rem !important;
+  font-weight: 600 !important;
+  padding: 0.32rem 0.75rem !important;
+  border-radius: 8px !important;
+  cursor: pointer !important;
+  flex-shrink: 0;
+  line-height: 1.2;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+.msg .content .code-copy:hover {
+  background: #52525b !important;
+}
+.msg .content .code-copy.copied {
+  color: #86efac !important;
+  border-color: rgba(134, 239, 172, 0.45) !important;
+}
 .msg .content pre {
-  background: #0d0d0d;
-  border: 1px solid var(--border);
-  border-radius: 10px;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
   padding: 0.85rem 1rem;
   overflow-x: auto;
   font-family: var(--mono);
   font-size: 0.85rem;
-  margin: 0.6rem 0;
+  margin: 0;
 }
 .msg .content pre code {
   background: none;
   padding: 0;
   font-size: inherit;
+}
+.msg .content p > .code-block {
+  margin: 0.75rem 0;
 }
 .msg.typing .content::after {
   content: "●";

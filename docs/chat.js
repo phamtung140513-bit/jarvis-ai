@@ -394,25 +394,134 @@
       .replace(/>/g, "&gt;");
   }
 
+  function buildCodeBlockHtml(lang, code) {
+    const langLabel = String(lang || "code")
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9_+#-]/gi, "") || "code";
+    const body = String(code || "").replace(/\r\n/g, "\n").replace(/\n$/, "");
+    return (
+      '<div class="code-block">' +
+      '<div class="code-block-bar">' +
+      '<span class="code-lang">' +
+      langLabel +
+      "</span>" +
+      '<button type="button" class="code-copy" title="Copy code">Copy</button>' +
+      "</div>" +
+      '<pre><code class="lang-' +
+      langLabel +
+      '">' +
+      body +
+      "</code></pre>" +
+      "</div>"
+    );
+  }
+
   function formatMarkdown(text) {
     if (!text) return "";
-    let s = escapeHtml(text);
-    s = s.replace(/```(\w+)?\n([\s\S]*?)```/g, (_, lang, code) => {
-      return (
-        '<pre><code class="lang-' +
-        (lang || "txt") +
-        '">' +
-        code.replace(/\n$/, "") +
-        "</code></pre>"
-      );
+    // Normalize newlines (Windows / model output)
+    let s = escapeHtml(String(text).replace(/\r\n/g, "\n").replace(/\r/g, "\n"));
+    const codeBlocks = [];
+
+    function pushBlock(lang, code) {
+      codeBlocks.push(buildCodeBlockHtml(lang, code));
+      return "\n\n@@CODEBLOCK" + (codeBlocks.length - 1) + "@@\n\n";
+    }
+
+    // Closed fences: ```lang\n...\n```  or  ```\n...\n```
+    s = s.replace(/```([^\n`]*)\n([\s\S]*?)```/g, function (_, lang, code) {
+      return pushBlock(lang, code);
     });
-    s = s.replace(/`([^`]+)`/g, "<code>$1</code>");
+    // Unclosed fence at end (streaming)
+    s = s.replace(/```([^\n`]*)\n([\s\S]*)$/g, function (_, lang, code) {
+      return pushBlock(lang, code);
+    });
+
+    s = s.replace(/`([^`\n]+)`/g, "<code>$1</code>");
     s = s.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
     s = s.replace(/(^|\n)[*-] (.+)/g, "$1• $2");
-    return s
+
+    s = s
       .split(/\n{2,}/)
-      .map((p) => "<p>" + p.replace(/\n/g, "<br>") + "</p>")
+      .map(function (p) {
+        const t = p.trim();
+        if (!t) return "";
+        if (/^@@CODEBLOCK\d+@@$/.test(t)) return t;
+        // Keep code placeholders out of <p>
+        if (t.indexOf("@@CODEBLOCK") !== -1) {
+          return t.replace(/(@@CODEBLOCK\d+@@)/g, "\n$1\n");
+        }
+        return "<p>" + p.replace(/\n/g, "<br>") + "</p>";
+      })
       .join("");
+
+    // Flatten any leftover wrapper newlines around markers
+    s = s.replace(/(?:<p>)?\s*(@@CODEBLOCK\d+@@)\s*(?:<\/p>)?/g, "$1");
+    s = s.replace(/@@CODEBLOCK(\d+)@@/g, function (_, i) {
+      return codeBlocks[Number(i)] || "";
+    });
+    return s;
+  }
+
+  function copyCodeText(text, btn) {
+    const done = function (ok) {
+      if (!btn) return;
+      btn.textContent = ok ? "Copied!" : "Loi";
+      btn.classList.toggle("copied", !!ok);
+      setTimeout(function () {
+        btn.textContent = "Copy";
+        btn.classList.remove("copied");
+      }, 1600);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(
+        function () { done(true); },
+        function () { fallbackCopy(text, done); }
+      );
+    } else {
+      fallbackCopy(text, done);
+    }
+  }
+
+  function fallbackCopy(text, done) {
+    try {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.setAttribute("readonly", "");
+      ta.style.position = "fixed";
+      ta.style.left = "-9999px";
+      document.body.appendChild(ta);
+      ta.select();
+      const ok = document.execCommand("copy");
+      document.body.removeChild(ta);
+      done(ok);
+    } catch (err) {
+      done(false);
+    }
+  }
+
+  /** Wrap bare <pre> and ensure every code block has Copy bar */
+  function enhanceCodeBlocks(root) {
+    if (!root) return;
+    root.querySelectorAll("pre").forEach(function (pre) {
+      if (pre.closest(".code-block")) return;
+      const wrap = document.createElement("div");
+      wrap.className = "code-block";
+      const bar = document.createElement("div");
+      bar.className = "code-block-bar";
+      bar.innerHTML =
+        '<span class="code-lang">code</span>' +
+        '<button type="button" class="code-copy" title="Copy code">Copy</button>';
+      pre.parentNode.insertBefore(wrap, pre);
+      wrap.appendChild(bar);
+      wrap.appendChild(pre);
+    });
+  }
+
+  function setAssistantHtml(el, text) {
+    if (!el) return;
+    el.innerHTML = formatMarkdown(text || "");
+    enhanceCodeBlocks(el);
   }
 
   function renderMessages() {
@@ -458,7 +567,7 @@
     }
     const contentEl = document.createElement("div");
     contentEl.className = "content";
-    if (role === "assistant") contentEl.innerHTML = formatMarkdown(content || "");
+    if (role === "assistant") setAssistantHtml(contentEl, content || "");
     else contentEl.textContent = content || "";
     body.appendChild(contentEl);
     row.appendChild(av);
@@ -680,7 +789,7 @@
               }
               if (j.type === "delta" && j.text) {
                 full += j.text;
-                contentEl.innerHTML = formatMarkdown(full);
+                setAssistantHtml(contentEl, full);
                 scrollBottom();
               }
               if (j.type === "error") throw new Error(j.message || "stream error");
@@ -702,7 +811,7 @@
 
       contentEl.parentElement.parentElement.classList.remove("typing");
       if (!full) throw new Error("Server tra ve rong. Kiem tra webapp dang chay?");
-      contentEl.innerHTML = formatMarkdown(full);
+      setAssistantHtml(contentEl, full);
       chat.messages.push({ role: "assistant", content: full });
       chat.updated = Date.now();
       persistChats();
@@ -710,7 +819,8 @@
       setStatus(true);
     } catch (err) {
       contentEl.parentElement.parentElement.classList.remove("typing");
-      contentEl.innerHTML = formatMarkdown(
+      setAssistantHtml(
+        contentEl,
         "**Loi ket noi server**\n\n" +
           String(err.message || err) +
           "\n\nChu y:\n" +
@@ -770,6 +880,20 @@
     if (els.fileImage.files && els.fileImage.files.length) addFiles(els.fileImage.files);
     els.fileImage.value = "";
   });
+
+  // Event delegation: Copy tren moi code block (ke ca sau stream)
+  if (els.messages) {
+    els.messages.addEventListener("click", function (e) {
+      const btn = e.target && e.target.closest && e.target.closest(".code-copy");
+      if (!btn) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const block = btn.closest(".code-block");
+      const codeEl = block && block.querySelector("pre code, pre");
+      const text = codeEl ? codeEl.textContent || "" : "";
+      copyCodeText(text, btn);
+    });
+  }
 
   els.btnNew.addEventListener("click", newChat);
   if (els.btnLogout) {
