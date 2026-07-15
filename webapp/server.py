@@ -424,6 +424,11 @@ def create_app() -> FastAPI:
             else HTMLResponse("x", status_code=404)
         )
 
+    @app.get("/HUONG_DAN_VIETQR_STK.html", response_model=None)
+    async def huong_dan_vietqr_stk():
+        p = _docs_file("HUONG_DAN_VIETQR_STK.html")
+        return _file_nocache(p) if p else HTMLResponse("Not found", status_code=404)
+
     @app.get("/login.html", response_model=None)
     async def login_page():
         p = _docs_file("login.html")

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Hướng dẫn VietQR + STK — TungDevAI</title>
+  <meta name="theme-color" content="#0a0a0c" />
+  <link rel="icon" href="./assets/icon.jpg" type="image/jpeg" />
+  <link rel="stylesheet" href="./pricing.css?v=4" />
+  <style>
+    .guide { max-width: 720px; margin: 0 auto; padding: 1.5rem 1.25rem 3rem; }
+    .guide h1 { font-size: 1.5rem; margin: 0 0 .75rem; }
+    .guide h2 { font-size: 1.1rem; margin: 1.5rem 0 .5rem; }
+    .guide p, .guide li { color: var(--muted); line-height: 1.55; }
+    .guide code, .guide pre {
+      background: #121216;
+      border-radius: 8px;
+      font-size: .88rem;
+    }
+    .guide code { padding: .12em .4em; color: #e8eefc; }
+    .guide pre {
+      padding: .85rem 1rem;
+      overflow: auto;
+      color: #e8eefc;
+      border: 1px solid var(--line);
+    }
+    .guide table { width: 100%; border-collapse: collapse; margin: .75rem 0; font-size: .92rem; }
+    .guide th, .guide td { border: 1px solid var(--line); padding: .5rem .65rem; text-align: left; }
+    .guide th { color: var(--text); }
+    .guide td { color: var(--muted); }
+    .guide a { color: #9ec1ff; }
+    .back { display: inline-block; margin-bottom: 1rem; color: var(--muted); text-decoration: none; }
+    .back:hover { color: var(--text); }
+  </style>
+</head>
+<body class="pricing-page">
+  <header class="p-nav">
+    <a class="p-brand" href="./">
+      <img src="./assets/bot-avatar.jpg" alt="" width="32" height="32" />
+      <span>TungDevAI</span>
+    </a>
+    <nav>
+      <a href="./pricing.html">Bảng giá</a>
+      <a href="./chat.html">Chat</a>
+    </nav>
+  </header>
+
+  <main class="guide">
+    <a class="back" href="./pricing.html">← Bảng giá</a>
+    <h1>Hướng dẫn VietQR + STK của bạn</h1>
+    <p>
+      Video demo chỉ là <strong>ví dụ luồng</strong> — không dùng STK trong video.
+      Hệ thống gắn <strong>tài khoản ngân hàng trong file <code>.env</code></strong> của shop.
+    </p>
+
+    <h2>1. STK nhận tiền (máy bạn)</h2>
+    <table>
+      <tr><th>Ngân hàng</th><td>HDBank (<code>hdbank</code>)</td></tr>
+      <tr><th>Số TK</th><td><code>0964084203</code></td></tr>
+      <tr><th>Chủ TK</th><td>NGUYEN THI THUY</td></tr>
+    </table>
+    <p>Sửa ở 2 file (phải giống nhau):</p>
+    <ul>
+      <li><code>C:\Users\Admin\vietqr-pay\.env</code> — <code>BANK_CODE</code> / <code>BANK_ACCOUNT</code> / <code>BANK_ACCOUNT_NAME</code></li>
+      <li><code>C:\Users\Admin\Jarvis-AI\.env</code> — <code>BANK_ID</code> / <code>BANK_ACCOUNT</code> / <code>BANK_ACCOUNT_NAME</code></li>
+    </ul>
+
+    <h2>2. Ba mode VietQR</h2>
+    <table>
+      <tr>
+        <th>Mode</th>
+        <th>Cần gì</th>
+        <th>Ghi chú</th>
+      </tr>
+      <tr>
+        <td><code>image</code></td>
+        <td>Chỉ STK (đang bật)</td>
+        <td>QR qua <code>img.vietqr.io</code> + STK bạn — không cần API key</td>
+      </tr>
+      <tr>
+        <td><code>io</code></td>
+        <td>Client ID + API Key từ <a href="https://my.vietqr.io" target="_blank" rel="noopener">my.vietqr.io</a></td>
+        <td>API <code>api.vietqr.io/v2/generate</code> + STK bạn</td>
+      </tr>
+      <tr>
+        <td><code>partner</code></td>
+        <td>Token partner + URL HTTPS</td>
+        <td>Biết đã CK (webhook BĐSD) → auto lên gói</td>
+      </tr>
+    </table>
+
+    <h2>3. Bật API chính thức (mode io)</h2>
+    <ol>
+      <li>Đăng ký / đăng nhập <a href="https://my.vietqr.io" target="_blank" rel="noopener">my.vietqr.io</a></li>
+      <li>Lấy <strong>Client ID</strong> và <strong>API Key</strong></li>
+      <li>Sửa <code>vietqr-pay\.env</code>:</li>
+    </ol>
+    <pre>VIETQR_MODE=io
+VIETQR_CLIENT_ID=...dán key...
+VIETQR_API_KEY=...dán key...
+BANK_CODE=hdbank
+BANK_ACCOUNT=0964084203
+BANK_ACCOUNT_NAME=NGUYEN THI THUY</pre>
+    <p>Rồi restart: <code>cd C:\Users\Admin\vietqr-pay</code> → <code>npm start</code></p>
+
+    <h2>4. Chạy dịch vụ</h2>
+    <pre># Terminal 1 — VietQR (STK bạn)
+cd C:\Users\Admin\vietqr-pay
+npm start
+
+# Terminal 2 — Web AI
+cd C:\Users\Admin\Jarvis-AI
+.\.venv\Scripts\python.exe -m webapp.server
+
+# Terminal 3 — Bot Telegram (fulfill)
+cd C:\Users\Admin\Jarvis-AI
+.\.venv\Scripts\python.exe launcher.py</pre>
+    <p>Kiểm tra STK: <a href="http://127.0.0.1:3000/api/health" target="_blank" rel="noopener">http://127.0.0.1:3000/api/health</a>
+      → phải thấy <code>bank=hdbank</code>, <code>accountMasked=096***203</code>.</p>
+
+    <h2>5. File hướng dẫn đầy đủ (máy local)</h2>
+    <p>
+      <code>C:\Users\Admin\vietqr-pay\HUONG_DAN_API_STK.md</code><br />
+      <code>C:\Users\Admin\vietqr-pay\HUONG_DAN.md</code>
+    </p>
+  </main>
+</body>
+</html>

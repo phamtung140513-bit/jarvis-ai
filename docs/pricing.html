@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="./pricing.css?v=3" />
+  <link rel="stylesheet" href="./pricing.css?v=4" />
 </head>
 <body class="pricing-page">
   <header class="p-nav">
@@ -34,28 +34,13 @@
       <p class="p-promo">
         AI chuyên <strong>coder</strong> — web chat + bot Telegram
       </p>
-      <p class="p-sub">Chọn gói → thanh toán bot → nhận mã → kích hoạt trên web hoặc Telegram.</p>
+      <p class="p-sub">Chọn gói phù hợp · đăng nhập rồi bấm Mua gói.</p>
 
       <div class="p-tabs" role="tablist">
         <button type="button" class="p-tab active" data-tab="personal" id="tabPersonal">Cá nhân</button>
         <button type="button" class="p-tab" data-tab="biz" id="tabBiz">Doanh nghiệp</button>
       </div>
     </div>
-
-    <!-- Cách mua -->
-    <section class="p-steps" aria-label="Cach mua">
-      <h2 class="p-steps-title">Cách mua trong 4 bước</h2>
-      <ol class="p-steps-list">
-        <li><strong>Đăng nhập web</strong> — <a href="./login.html">login</a> / <a href="./register.html">đăng ký</a></li>
-        <li><strong>Bấm Mua gói</strong> trên thẻ Basic/Pro/Business → hiện QR VietQR</li>
-        <li><strong>Chuyển khoản</strong> đúng số tiền + nội dung CK (autobank nhận tự động)</li>
-        <li><strong>Auto kích hoạt</strong> gói web + (nếu mua từ bot) gói Telegram</li>
-      </ol>
-      <p class="p-steps-note">
-        Bot Telegram: <a href="https://t.me/grokapiai_bot" target="_blank" rel="noopener">@grokapiai_bot</a> · <code>/buy</code>
-        · Support: <a href="https://t.me/usertungpham" target="_blank" rel="noopener">@usertungpham</a>
-      </p>
-    </section>
 
     <!-- Cá nhân -->
     <section class="p-grid" id="gridPersonal" aria-label="Goi ca nhan">
@@ -77,7 +62,7 @@
         <h2>Basic</h2>
         <p class="p-price"><span class="num">49.000</span><span class="unit">đ<span>/tháng</span></span></p>
         <p class="p-desc">Cá nhân — code hàng ngày + GPT</p>
-        <button type="button" class="p-cta p-cta-muted js-buy" data-plan="basic">Mua Basic (QR auto)</button>
+        <button type="button" class="p-cta p-cta-muted js-buy" data-plan="basic">Mua Basic</button>
         <ul class="p-feats">
           <li><span class="ico">💬</span> 100 tin nhắn / ngày</li>
           <li><span class="ico">🤖</span> Model <strong>GPT</strong> (gpt-oss-120B)</li>
@@ -92,7 +77,7 @@
         <h2>Pro</h2>
         <p class="p-price"><span class="num">99.000</span><span class="unit">đ<span>/tháng</span></span></p>
         <p class="p-desc">Freelancer — DeepSeek Pro + quota cao + agent</p>
-        <button type="button" class="p-cta p-cta-primary js-buy" data-plan="pro">Mua Pro (QR auto)</button>
+        <button type="button" class="p-cta p-cta-primary js-buy" data-plan="pro">Mua Pro</button>
         <ul class="p-feats">
           <li><span class="ico">⚡</span> 500 tin nhắn / ngày</li>
           <li><span class="ico">🤖</span> Model <strong>DeepSeek-V4-Pro</strong> (mạnh nhất)</li>
@@ -107,7 +92,7 @@
         <h2>Business</h2>
         <p class="p-price"><span class="num">199.000</span><span class="unit">đ<span>/tháng</span></span></p>
         <p class="p-desc">Không giới hạn tin — GPT cho team</p>
-        <button type="button" class="p-cta p-cta-primary js-buy" data-plan="business">Mua Business (QR auto)</button>
+        <button type="button" class="p-cta p-cta-primary js-buy" data-plan="business">Mua Business</button>
         <ul class="p-feats">
           <li><span class="ico">∞</span> Không giới hạn tin / ngày</li>
           <li><span class="ico">🤖</span> Model <strong>VIP</strong> DeepSeek-V4-Pro</li>
@@ -153,20 +138,16 @@
       <div class="p-faq-grid">
         <div>
           <h3>Thanh toán thế nào?</h3>
-          <p><strong>Web:</strong> bấm Mua gói → quét QR → autobank nhận CK → auto lên gói.<br/>
-          <strong>Bot:</strong> <code>/buy</code> hoặc <code>/qr basic</code> → cùng luồng auto.</p>
+          <p>Đăng nhập → bấm <strong>Mua gói</strong> → quét QR VietQR (STK shop) → chuyển khoản.<br/>
+          Hoặc bot Telegram: <a href="https://t.me/grokapiai_bot" target="_blank" rel="noopener">@grokapiai_bot</a> · <code>/buy</code>.</p>
         </div>
         <div>
           <h3>Web chat có cần gói không?</h3>
-          <p>Có. Đăng ký nhận <strong>Trial</strong> (Groq). Nâng Basic = GPT · Pro = DeepSeek. Hết hạn/quota → mua lại.</p>
-        </div>
-        <div>
-          <h3>CK xong bao lâu lên gói?</h3>
-          <p>Autobank (VietQR BĐSD / partner) → vài giây–vài phút. Nếu chậm: gõ <code>/activate MÃ</code> hoặc nhắn support.</p>
+          <p>Có. Đăng ký nhận <strong>Trial</strong> (Groq). Basic = GPT · Pro = DeepSeek. Hết hạn/quota → mua lại.</p>
         </div>
         <div>
           <h3>Đổi gói / gia hạn?</h3>
-          <p>Nhắn <a href="https://t.me/usertungpham" target="_blank" rel="noopener">@usertungpham</a> hoặc mua lại mã qua bot.</p>
+          <p>Nhắn <a href="https://t.me/usertungpham" target="_blank" rel="noopener">@usertungpham</a> hoặc mua lại gói.</p>
         </div>
       </div>
     </section>
@@ -184,7 +165,7 @@
       <a href="./chat.html">Chat</a> ·
       <a href="https://t.me/grokapiai_bot" target="_blank" rel="noopener">Bot</a>
     </p>
-    <p class="fine">Support: @usertungpham</p>
+    <p class="fine">Support: @usertungpham · <a href="./HUONG_DAN_VIETQR_STK.html">Hướng dẫn VietQR + STK</a></p>
   </footer>
 
   <!-- Modal QR autobank -->
