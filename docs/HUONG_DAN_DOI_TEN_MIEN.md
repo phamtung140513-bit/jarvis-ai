@@ -16,10 +16,7 @@ Repo site: `jarvisai-tung/jarvisai-tung.github.io` (Pages folder `/docs`)
 - **API chat**: máy bạn / tunnel / **VPS** (`docs/config.json` → `apiBase`)  
 - **Sau VPS**: trỏ domain riêng hoặc `http://IP:7860` — UI github.io vẫn giữ làm landing nếu muốn
 
-Backup (cũ, vẫn chạy được):
-```text
-https://phamtung140513-bit.github.io/jarvis-ai/
-```
+Site cũ `phamtung140513-bit.github.io/jarvis-ai` **đã tắt Pages** — chỉ dùng miền dưới.
 
 ---
 
@@ -28,7 +25,7 @@ https://phamtung140513-bit.github.io/jarvis-ai/
 Hiện tại web free là:
 
 ```text
-https://phamtung140513-bit.github.io/jarvis-ai/
+https://jarvisai-tung.github.io/
 ```
 
 

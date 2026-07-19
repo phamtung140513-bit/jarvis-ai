@@ -1,7 +1,7 @@
 # GitHub Pages + Tunnel (mien public, free)
 
 Muc tieu:
-- User mo: https://phamtung140513-bit.github.io/jarvis-ai/
+- User mo: https://jarvisai-tung.github.io/
 - AI van chay bang key tren may ban (port 7860)
 - Dung Cloudflare Tunnel (free, khong can mo port router)
 
@@ -36,7 +36,7 @@ https://xxxx-xx-xx.trycloudflare.com
 
 ## Buoc 4 — Gan API vao web GitHub
 
-1. Mo: https://phamtung140513-bit.github.io/jarvis-ai/j-panel.html
+1. Mo: https://jarvisai-tung.github.io/j-panel.html
 2. O "API server" dan: `https://xxxx.trycloudflare.com` (khong co / cuoi)
 3. Dang nhap admin key
 4. Luu (neu co o Backend URL)
@@ -55,7 +55,7 @@ Roi push GitHub.
 
 ## Buoc 5 — User dung
 
-Mo: https://phamtung140513-bit.github.io/jarvis-ai/
+Mo: https://jarvisai-tung.github.io/
 
 Chat se goi tunnel → may ban → Groq.
 

@@ -67,7 +67,7 @@ echo   https://github.com/phamtung140513-bit/jarvis-ai/settings/pages
 echo   Source = GitHub Actions
 echo.
 echo   Web chat se la:
-echo   https://phamtung140513-bit.github.io/jarvis-ai/
+echo   https://jarvisai-tung.github.io/
 echo ============================================
 start "" "https://github.com/phamtung140513-bit/jarvis-ai/settings/pages"
 pause

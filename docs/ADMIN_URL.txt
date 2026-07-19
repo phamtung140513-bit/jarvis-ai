@@ -5,7 +5,6 @@ Trang ADMIN quan ly (khong link tren chat user):
 
   GitHub Pages UI (can API/tunnel/VPS dang chay):
     https://jarvisai-tung.github.io/j-panel.html
-    (cu: https://phamtung140513-bit.github.io/jarvis-ai/j-panel.html)
 
 Key: WEB_ADMIN_KEY trong .env
   mac dinh: jarvis-admin-change-me  (nen doi)

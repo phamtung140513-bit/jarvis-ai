@@ -29,7 +29,7 @@ Vay:
 1. May ban chay `python -m webapp.server`
 2. Cloudflare Tunnel / ngrok tao link public → tro ve 7860
 3. Admin / config dat API URL = link tunnel
-4. User mo: https://phamtung140513-bit.github.io/jarvis-ai/
+4. User mo: https://jarvisai-tung.github.io/
    → chat van goi duoc AI (qua tunnel)
 
 **Luu y:** may ban phai BAT + co mang.
