@@ -138,13 +138,13 @@ def send_otp_email(
     app_name: str = "TungDevAI",
 ) -> None:
     """Send verification code via SMTP. Raises on failure."""
-    purpose_vi = "dang ky" if purpose == "register" else "xac thuc"
-    subject = f"[{app_name}] Ma {purpose_vi}: {code}"
+    purpose_vi = "đăng ký" if purpose == "register" else "xác thực"
+    subject = f"[{app_name}] Mã {purpose_vi}: {code}"
     body = (
-        f"Xin chao,\n\n"
-        f"Ma xac thuc {purpose_vi} {app_name} cua ban la:\n\n"
+        f"Xin chào,\n\n"
+        f"Mã {purpose_vi} {app_name} của bạn là:\n\n"
         f"    {code}\n\n"
-        f"Ma co hieu luc 10 phut. Neu ban khong yeu cau, hay bo qua email nay.\n\n"
+        f"Mã có hiệu lực 10 phút. Nếu bạn không yêu cầu, hãy bỏ qua email này.\n\n"
         f"— {app_name}\n"
     )
     msg = EmailMessage()

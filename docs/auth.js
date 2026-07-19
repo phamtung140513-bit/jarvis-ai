@@ -304,14 +304,27 @@ const TungAuth = (() => {
         body: JSON.stringify({ email, purpose: "register" }),
       });
       const data = await parseJsonResponse(r);
-      let msg = data.message || "Đã gửi mã xác thực.";
-      if (data.dev_code) {
-        msg = "Mã xác thực (dev): " + data.dev_code + " — nhập vào ô Mã xác thực.";
-        if ($("regCode")) $("regCode").value = data.dev_code;
-      }
-      showOk(msg);
-      if ($("codeHint")) {
-        $("codeHint").textContent = data.sent ? "Kiểm tra hộp thư (và spam)." : "";
+      // Khong bao gio tu dien ma vao o — user chi nhan ma qua email
+      if ($("regCode")) $("regCode").value = "";
+
+      if (data.sent) {
+        showOk(
+          "Đã gửi mã 6 số tới " +
+            (data.email || email) +
+            ". Mở email (và Spam), rồi gõ mã vào ô — web không tự điền."
+        );
+        if ($("codeHint")) {
+          $("codeHint").textContent =
+            "Mã chỉ có trong hộp thư. Không thấy? Đợi 1 phút / kiểm tra Spam.";
+        }
+      } else {
+        // Khong hien dev_code tren UI (du server co tra)
+        showErr(
+          "Chưa gửi được email. Trên VPS: điền SMTP_USER=tung140513@gmail.com + SMTP_PASSWORD (App Password), AUTH_DEV_SHOW_CODE=false, rồi: systemctl restart tungdevai-web"
+        );
+        if ($("codeHint")) {
+          $("codeHint").textContent = "SMTP chưa gửi mail — mã không vào ô và không vào email.";
+        }
       }
       sendCodeCooldown = 45;
       const tick = function () {

@@ -33,8 +33,14 @@ ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from ai.coder import CoderAgent  # noqa: E402
+from ai.debugger import DebuggerAgent  # noqa: E402
 from ai.grok import GrokClient, GrokError  # noqa: E402
+from ai.modes import MODES, get_mode, merge_prompt_layers  # noqa: E402
+from ai.pipeline import AgentPipeline  # noqa: E402
+from ai.planner import PlannerAgent  # noqa: E402
 from ai.prompts import SYSTEM_PROMPT  # noqa: E402
+from ai.reviewer import ReviewerAgent  # noqa: E402
 from config import get_settings  # noqa: E402
 from database.sqlite import Database, set_db  # noqa: E402
 from product.access_codes import create_access_code  # noqa: E402
@@ -94,6 +100,26 @@ class ChatBody(BaseModel):
     message: str = Field(..., min_length=1, max_length=32000)
     session_id: str = Field(default="", max_length=64)
     stream: bool = True
+    # Chat mode: default | coder | security | research | sales
+    mode: str = Field(default="default", max_length=32)
+
+
+WEB_HELP = """\
+## 🎛 TungDevAI Web — lệnh nhanh
+
+| Lệnh | Mô tả |
+|------|--------|
+| `/help` | Trợ giúp này |
+| `/mode <id>` | Đổi chế độ: `default` · `coder` · `security` · `research` · `sales` |
+| `/plan <task>` | Agent Planner — lập kế hoạch |
+| `/code <spec>` | Agent Coder — sinh code |
+| `/review <code>` | Agent Reviewer |
+| `/debug <error>` | Agent Debugger |
+| `/build <task>` | Pipeline plan → code → review |
+| `/activate MÃ` | Kích hoạt gói (xử lý client) |
+
+**Tip:** chọn mode **Coder** trên thanh công cụ để code production-ready mặc định.
+"""
 
 
 class AdminLoginBody(BaseModel):
@@ -425,6 +451,8 @@ def create_app() -> FastAPI:
         )
 
     @app.get("/HUONG_DAN_VIETQR_STK.html", response_model=None)
+    @app.get("/huong-dan-vietqr-stk.html", response_model=None)
+    @app.get("/huong-dan-stk.html", response_model=None)
     async def huong_dan_vietqr_stk():
         p = _docs_file("HUONG_DAN_VIETQR_STK.html")
         return _file_nocache(p) if p else HTMLResponse("Not found", status_code=404)
@@ -480,22 +508,36 @@ def create_app() -> FastAPI:
     @app.get("/styles.css", response_model=None)
     async def styles_css():
         p = _docs_file("styles.css")
-        return FileResponse(p, media_type="text/css") if p else HTMLResponse("x", status_code=404)
+        return _file_nocache(p, "text/css") if p else HTMLResponse("x", status_code=404)
 
     # Secret admin page — not linked from user chat UI
     @app.get("/j-panel.html", response_model=None)
     async def admin_panel_page():
         p = _docs_file("j-panel.html")
-        return FileResponse(p) if p else HTMLResponse("Not found", status_code=404)
+        return _file_nocache(p) if p else HTMLResponse("Not found", status_code=404)
 
     @app.get("/admin.js", response_model=None)
     async def admin_js():
         p = _docs_file("admin.js")
         return (
-            FileResponse(p, media_type="application/javascript")
+            _file_nocache(p, "application/javascript")
             if p
             else HTMLResponse("x", status_code=404)
         )
+
+    # Catch-all HTML guides — MUST be after all specific .html routes
+    @app.get("/{page_name}.html", response_model=None)
+    async def docs_html_page(page_name: str):
+        if not page_name or "/" in page_name or ".." in page_name:
+            return HTMLResponse("Not found", status_code=404)
+        for candidate in (
+            f"{page_name}.html",
+            f"{page_name.upper()}.html",
+        ):
+            p = _docs_file(candidate)
+            if p:
+                return _file_nocache(p)
+        return HTMLResponse("Not found", status_code=404)
 
     @app.get("/api/health")
     async def health() -> dict[str, Any]:
@@ -517,6 +559,14 @@ def create_app() -> FastAPI:
     @app.get("/api/config")
     async def public_config() -> dict[str, Any]:
         # Public: no secrets (client_id is public by design for GIS)
+        modes = [
+            {
+                "id": m.id,
+                "name": m.name,
+                "description": m.description,
+            }
+            for m in MODES.values()
+        ]
         return {
             "app_name": settings.app_name,
             "tagline": settings.product_tagline,
@@ -533,6 +583,17 @@ def create_app() -> FastAPI:
             "role": "coder",
             "apiBase": "",
             "same_origin": True,
+            "modes": modes,
+            "slash_commands": [
+                "help",
+                "mode",
+                "plan",
+                "code",
+                "review",
+                "debug",
+                "build",
+                "activate",
+            ],
         }
 
     @app.post("/api/auth/send-code")
@@ -581,33 +642,40 @@ def create_app() -> FastAPI:
                 "SMTP not configured — OTP for %s (%s): %s", email, purpose, code
             )
 
-        if not sent and not auth_dev_show_code:
-            raise HTTPException(
-                503,
-                "Khong gui duoc email. Cau hinh SMTP_HOST/SMTP_USER/SMTP_PASSWORD trong .env",
+        if not sent:
+            # Production: khong tra ma ra trinh duyet (tranh tu dien form)
+            detail = (
+                "Không gửi được email. "
+                "Kiểm tra SMTP_HOST/SMTP_USER/SMTP_PASSWORD (Gmail App Password) trên server, "
+                "rồi systemctl restart tungdevai-web."
             )
+            if err_msg:
+                detail = f"SMTP lỗi: {err_msg}"
+            if auth_dev_show_code:
+                # Chi log server — van co the hien ma neu bat AUTH_DEV_SHOW_CODE=true
+                logger.warning("DEV OTP %s (%s): %s", email, purpose, code)
+                return {
+                    "ok": True,
+                    "email": email,
+                    "purpose": purpose,
+                    "sent": False,
+                    "message": (
+                        f"SMTP chưa gửi mail. Mã dev (chi khi AUTH_DEV_SHOW_CODE): {code}"
+                    ),
+                    "dev_code": code,
+                    "expires_in": 600,
+                    "smtp_error": err_msg or "SMTP not configured",
+                }
+            raise HTTPException(503, detail)
 
-        out: dict[str, Any] = {
+        return {
             "ok": True,
             "email": email,
             "purpose": purpose,
-            "sent": sent,
-            "message": (
-                "Đã gửi mã xác thực tới email của bạn."
-                if sent
-                else "SMTP chưa cấu hình — dùng mã dev (xem bên dưới / log server)."
-            ),
+            "sent": True,
+            "message": f"Đã gửi mã xác thực tới {email}. Kiểm tra hộp thư và Spam.",
             "expires_in": 600,
         }
-        # Local/dev: return code so you can test without Gmail SMTP
-        if auth_dev_show_code and not sent:
-            out["dev_code"] = code
-            out["message"] = f"Mã xác thực (dev): {code} — cấu hình SMTP để gửi thật."
-        if err_msg and auth_dev_show_code:
-            out["dev_code"] = code
-            out["smtp_error"] = err_msg
-            out["message"] = f"SMTP lỗi, mã dev: {code}"
-        return out
 
     @app.post("/api/auth/register")
     async def auth_register(body: RegisterBody) -> dict[str, Any]:
@@ -1033,6 +1101,30 @@ def create_app() -> FastAPI:
         except Exception:
             logger.exception("persist message failed")
 
+    def _parse_slash(text: str) -> tuple[str | None, str]:
+        """Return (command, args). command is lowercased without leading /."""
+        raw = (text or "").strip()
+        if not raw.startswith("/"):
+            return None, raw
+        # First token only; rest is args
+        parts = raw.split(None, 1)
+        cmd = parts[0][1:].lower().split("@", 1)[0]
+        args = parts[1].strip() if len(parts) > 1 else ""
+        return cmd, args
+
+    def _resolve_mode(mode_id: str | None) -> Any:
+        return get_mode((mode_id or "default").strip().lower())
+
+    def _system_for_mode(mode_id: str | None) -> str | None:
+        mode = _resolve_mode(mode_id)
+        return merge_prompt_layers(mode_prompt=mode.prompt or None, teachings=None)
+
+    def _temp_for_mode(mode_id: str | None, default: float = 0.25) -> float:
+        mode = _resolve_mode(mode_id)
+        if mode.temperature is not None:
+            return float(mode.temperature)
+        return default
+
     @app.post("/api/chat")
     async def chat(
         body: ChatBody,
@@ -1045,6 +1137,11 @@ def create_app() -> FastAPI:
         text = body.message.strip()
         if not text:
             raise HTTPException(400, "Tin nhắn trống")
+
+        mode_id = (body.mode or "default").strip().lower()
+        if mode_id not in MODES:
+            mode_id = "default"
+        mode_obj = get_mode(mode_id)
 
         # Plan / daily quota for logged-in web users
         web_user_id: int | None = None
@@ -1082,6 +1179,128 @@ def create_app() -> FastAPI:
         mem: SessionMemory = request.app.state.memory
         client: GrokClient = request.app.state.grok
         route = client.route_for_plan(plan_id, plan_expired=plan_expired)
+        planner = PlannerAgent(client)
+        coder = CoderAgent(client)
+        reviewer = ReviewerAgent(client)
+        debugger = DebuggerAgent(client)
+        pipeline = AgentPipeline(client)
+
+        cmd, args = _parse_slash(text)
+
+        # Local meta commands (no quota / no LLM)
+        if cmd in ("help", "h", "?"):
+            reply = WEB_HELP
+            await _hydrate_session(sid)
+            mem.add(sid, "user", text)
+            await _persist(sid, "user", text)
+            mem.add(sid, "assistant", reply)
+            await _persist(sid, "assistant", reply)
+
+            async def help_gen():
+                yield _sse(
+                    {
+                        "type": "meta",
+                        "session_id": sid,
+                        "plan_id": plan_id,
+                        "mode": mode_id,
+                        "agent": "help",
+                        "ai_tier": route.tier,
+                        "ai_provider": route.provider,
+                        "ai_model": route.model,
+                        "ai_label": route.label,
+                    }
+                )
+                yield _sse({"type": "delta", "text": reply})
+                yield _sse({"type": "done", "session_id": sid})
+
+            if body.stream:
+                return StreamingResponse(
+                    help_gen(),
+                    media_type="text/event-stream",
+                    headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+                )
+            return {
+                "session_id": sid,
+                "reply": reply,
+                "plan_id": plan_id,
+                "mode": mode_id,
+                "agent": "help",
+                "ai_tier": route.tier,
+                "ai_model": route.model,
+                "ai_label": route.label,
+            }
+
+        if cmd == "mode":
+            new_mode = (args or "default").strip().lower() or "default"
+            if new_mode not in MODES:
+                reply = (
+                    f"Mode không hợp lệ: `{new_mode}`\n\n"
+                    + "Chọn: "
+                    + " · ".join(f"`{m}`" for m in MODES)
+                    + "\n\nVD: `/mode coder`"
+                )
+            else:
+                m = get_mode(new_mode)
+                mode_id = m.id
+                mode_obj = m
+                reply = (
+                    f"✅ Đã chọn mode **{m.name}** (`{m.id}`)\n\n"
+                    f"{m.description}\n\n"
+                    "Gửi tin tiếp theo sẽ dùng mode này (client cũng nên gửi `mode`)."
+                )
+            await _hydrate_session(sid)
+            mem.add(sid, "user", text)
+            await _persist(sid, "user", text)
+            mem.add(sid, "assistant", reply)
+            await _persist(sid, "assistant", reply)
+
+            async def mode_gen():
+                yield _sse(
+                    {
+                        "type": "meta",
+                        "session_id": sid,
+                        "plan_id": plan_id,
+                        "mode": mode_id,
+                        "agent": "mode",
+                        "ai_tier": route.tier,
+                        "ai_provider": route.provider,
+                        "ai_model": route.model,
+                        "ai_label": route.label,
+                    }
+                )
+                yield _sse({"type": "delta", "text": reply})
+                yield _sse({"type": "done", "session_id": sid, "mode": mode_id})
+
+            if body.stream:
+                return StreamingResponse(
+                    mode_gen(),
+                    media_type="text/event-stream",
+                    headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+                )
+            return {
+                "session_id": sid,
+                "reply": reply,
+                "plan_id": plan_id,
+                "mode": mode_id,
+                "agent": "mode",
+                "ai_tier": route.tier,
+                "ai_model": route.model,
+                "ai_label": route.label,
+            }
+
+        # Agent slash commands
+        agent_cmds = {"plan", "code", "review", "debug", "build"}
+        is_agent = cmd in agent_cmds
+
+        if is_agent and not args:
+            hints = {
+                "plan": "Dùng: `/plan mô tả task`",
+                "code": "Dùng: `/code mô tả / spec cần code`",
+                "review": "Dùng: `/review dán code…`",
+                "debug": "Dùng: `/debug traceback / log lỗi…`",
+                "build": "Dùng: `/build mô tả task` (plan→code→review)",
+            }
+            raise HTTPException(400, hints.get(cmd or "", "Thiếu tham số lệnh"))
 
         await _hydrate_session(sid)
         mem.add(sid, "user", text)
@@ -1097,39 +1316,162 @@ def create_app() -> FastAPI:
             except Exception:
                 logger.exception("bump web usage failed")
 
+        system_extra = _system_for_mode(mode_id)
+        temperature = _temp_for_mode(mode_id, 0.25)
+        # Agent modes: slightly cooler for code quality
+        if is_agent:
+            temperature = min(temperature, 0.25)
+
+        meta_base = {
+            "type": "meta",
+            "session_id": sid,
+            "plan_id": plan_id,
+            "mode": mode_id,
+            "mode_name": mode_obj.name,
+            "agent": cmd if is_agent else "chat",
+            "ai_tier": route.tier,
+            "ai_provider": route.provider,
+            "ai_model": route.model,
+            "ai_label": route.label,
+        }
+
+        async def _run_agent() -> str:
+            assert cmd is not None
+            if cmd == "plan":
+                return await planner.plan(
+                    args, plan_id=plan_id, plan_expired=plan_expired
+                )
+            if cmd == "code":
+                return await coder.code(
+                    args, plan_id=plan_id, plan_expired=plan_expired
+                )
+            if cmd == "review":
+                return await reviewer.review(
+                    args, plan_id=plan_id, plan_expired=plan_expired
+                )
+            if cmd == "debug":
+                return await debugger.debug(
+                    args, plan_id=plan_id, plan_expired=plan_expired
+                )
+            if cmd == "build":
+                # Progress via coroutine queue on pipeline is handled in stream path
+                result = await pipeline.run(
+                    args,
+                    do_plan=True,
+                    do_code=True,
+                    do_review=True,
+                    plan_id=plan_id,
+                    plan_expired=plan_expired,
+                )
+                return result.format_web()
+            return "Unknown agent"
+
         if body.stream:
 
             async def event_gen():
-                yield _sse(
-                    {
-                        "type": "meta",
-                        "session_id": sid,
-                        "plan_id": plan_id,
-                        "ai_tier": route.tier,
-                        "ai_provider": route.provider,
-                        "ai_model": route.model,
-                        "ai_label": route.label,
-                    }
-                )
+                yield _sse(meta_base)
                 parts: list[str] = []
                 try:
-                    async for delta in client.chat_stream(
-                        history,
-                        system=WEB_SYSTEM,
-                        temperature=0.25,
-                        plan_id=plan_id,
-                        plan_expired=plan_expired,
-                    ):
-                        parts.append(delta)
-                        yield _sse({"type": "delta", "text": delta})
+                    if is_agent:
+                        labels = {
+                            "plan": "📋 Đang lập kế hoạch…",
+                            "code": "💻 Đang sinh code…",
+                            "review": "🔎 Đang review…",
+                            "debug": "🐛 Đang phân tích…",
+                            "build": "🔧 Pipeline plan → code → review…",
+                        }
+                        yield _sse(
+                            {
+                                "type": "status",
+                                "step": cmd,
+                                "text": labels.get(cmd or "", "Đang xử lý…"),
+                            }
+                        )
+                        if cmd == "build":
+                            # Emit status between real steps (not after the whole run)
+                            yield _sse(
+                                {
+                                    "type": "status",
+                                    "step": "plan",
+                                    "text": "📋 Bước 1/3 — lập kế hoạch…",
+                                }
+                            )
+                            plan_txt = await planner.plan(
+                                args, plan_id=plan_id, plan_expired=plan_expired
+                            )
+                            yield _sse(
+                                {
+                                    "type": "status",
+                                    "step": "code",
+                                    "text": "💻 Bước 2/3 — sinh code…",
+                                }
+                            )
+                            code_txt = await coder.code(
+                                (
+                                    f"Goal:\n{args}\n\n"
+                                    f"Plan to implement:\n{plan_txt}\n\n"
+                                    "Implement the solution based on the plan."
+                                ),
+                                plan_id=plan_id,
+                                plan_expired=plan_expired,
+                            )
+                            yield _sse(
+                                {
+                                    "type": "status",
+                                    "step": "review",
+                                    "text": "🔎 Bước 3/3 — review…",
+                                }
+                            )
+                            review_txt = await reviewer.review(
+                                code_txt,
+                                plan_id=plan_id,
+                                plan_expired=plan_expired,
+                            )
+                            from ai.pipeline import PipelineResult
+
+                            full = PipelineResult(
+                                goal=args,
+                                plan=plan_txt,
+                                code=code_txt,
+                                review=review_txt,
+                                steps_done=["plan", "code", "review"],
+                            ).format_web()
+                            if full:
+                                yield _sse({"type": "delta", "text": full})
+                                parts.append(full)
+                        else:
+                            full = await _run_agent()
+                            if full:
+                                yield _sse({"type": "delta", "text": full})
+                                parts.append(full)
+                    else:
+                        async for delta in client.chat_stream(
+                            history,
+                            system=system_extra,
+                            temperature=temperature,
+                            plan_id=plan_id,
+                            plan_expired=plan_expired,
+                        ):
+                            parts.append(delta)
+                            yield _sse({"type": "delta", "text": delta})
                     full = "".join(parts).strip()
                     if full:
                         mem.add(sid, "assistant", full)
                         await _persist(sid, "assistant", full)
                         await _after_success()
-                    yield _sse({"type": "done", "session_id": sid})
+                    yield _sse(
+                        {
+                            "type": "done",
+                            "session_id": sid,
+                            "mode": mode_id,
+                            "agent": cmd if is_agent else "chat",
+                        }
+                    )
                 except GrokError as exc:
                     logger.exception("web chat stream error")
+                    yield _sse({"type": "error", "message": str(exc)})
+                except Exception as exc:
+                    logger.exception("web chat agent error")
                     yield _sse({"type": "error", "message": str(exc)})
 
             return StreamingResponse(
@@ -1142,13 +1484,16 @@ def create_app() -> FastAPI:
             )
 
         try:
-            reply = await client.chat(
-                history,
-                system=WEB_SYSTEM,
-                temperature=0.25,
-                plan_id=plan_id,
-                plan_expired=plan_expired,
-            )
+            if is_agent:
+                reply = await _run_agent()
+            else:
+                reply = await client.chat(
+                    history,
+                    system=system_extra,
+                    temperature=temperature,
+                    plan_id=plan_id,
+                    plan_expired=plan_expired,
+                )
         except GrokError as exc:
             raise HTTPException(502, str(exc)) from exc
         mem.add(sid, "assistant", reply)
@@ -1158,6 +1503,8 @@ def create_app() -> FastAPI:
             "session_id": sid,
             "reply": reply,
             "plan_id": plan_id,
+            "mode": mode_id,
+            "agent": cmd if is_agent else "chat",
             "ai_tier": route.tier,
             "ai_model": route.model,
             "ai_label": route.label,
@@ -1221,7 +1568,7 @@ def main() -> None:
         format="%(asctime)s | %(levelname)-7s | %(name)s | %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
     )
-    print(f"🌐 TungDevAI Web → http://127.0.0.1:{port}")
+    print(f"[OK] TungDevAI Web -> http://127.0.0.1:{port}")
     uvicorn.run(
         "webapp.server:app",
         host=host,
