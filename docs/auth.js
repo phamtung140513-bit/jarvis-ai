@@ -394,14 +394,6 @@ const TungAuth = (() => {
         width: 320,
         logo_alignment: "left",
       });
-      // Thêm nút fallback "cửa sổ Google" nếu GIS kẹt
-      const alt = document.createElement("button");
-      alt.type = "button";
-      alt.className = "auth-secondary";
-      alt.style.cssText = "width:100%;margin-top:0.5rem;font-size:0.85rem";
-      alt.textContent = "Không hiện nút? Đăng nhập Google (chuyển trang)";
-      alt.addEventListener("click", startGoogleOAuthRedirect);
-      wrap.appendChild(alt);
     } catch (e) {
       console.warn("GIS render failed", e);
       makeGoogleFallbackButton(wrap);
