@@ -90,6 +90,42 @@
         msg.textContent = t;
       }
 
+      function isStaticHost() {
+        var host = (location.hostname || "").toLowerCase();
+        return host.indexOf("github.io") !== -1 || location.protocol === "file:";
+      }
+
+      function isLoopback(url) {
+        return /^(https?:\/\/)?(127\.0\.0\.1|localhost)(:\d+)?/i.test(
+          String(url || "")
+        );
+      }
+
+      /** API base: same-origin trên tunnel/VPS; config.json apiBase trên github.io */
+      async function resolveApiBase() {
+        var origin = (location.origin || "").replace(/\/$/, "");
+        if (!isStaticHost() && origin.indexOf("http") === 0) {
+          return origin;
+        }
+        try {
+          var r = await fetch("config.json?v=24", { cache: "no-store" });
+          if (r.ok) {
+            var j = await r.json();
+            var b = String((j && j.apiBase) || "")
+              .trim()
+              .replace(/\/$/, "");
+            if (b && !isLoopback(b)) return b;
+          }
+        } catch (_) {}
+        try {
+          var ls = (localStorage.getItem("jarvis_api_base_v2") || "")
+            .trim()
+            .replace(/\/$/, "");
+          if (ls && !isLoopback(ls)) return ls;
+        } catch (_) {}
+        return "";
+      }
+
       /** Hoàn tất login: gọi API luôn (không qua sessionStorage — mobile hay mất) */
       async function completeLogin(token) {
         if (!token) {
@@ -115,11 +151,20 @@
         }
 
         setMsg("Đang xác thực với server…");
-        var api = (location.origin || "").replace(/\/$/, "");
+        var api = await resolveApiBase();
+        if (!api) {
+          fail(
+            "Chưa có server API.\nMở link ngrok/tunnel (có API), không chỉ github.io.\nHoặc cập nhật apiBase trong config.json."
+          );
+          return;
+        }
         try {
           var r = await fetch(api + "/api/auth/google", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+              "Content-Type": "application/json",
+              "ngrok-skip-browser-warning": "true",
+            },
             body: JSON.stringify({ credential: token }),
           });
           var text = await r.text();

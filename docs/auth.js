@@ -118,7 +118,7 @@ const TungAuth = (() => {
 
   async function loadPublicConfig() {
     try {
-      const r = await fetch("config.json?v=20", { cache: "no-store" });
+      const r = await fetch("config.json?v=24", { cache: "no-store" });
       if (r.ok) {
         cfgPublic = Object.assign(cfgPublic, await r.json());
         // Bat Google ngay tu config.json (khong doi /api/config)
@@ -126,6 +126,13 @@ const TungAuth = (() => {
           serverConfig.google_client_id = String(
             cfgPublic.google_client_id
           ).trim();
+        }
+        // github.io: luu apiBase tunnel de fetch API
+        const b = (cfgPublic.apiBase || "").trim().replace(/\/$/, "");
+        if (b && !isLoopbackUrl(b) && isStaticHost()) {
+          try {
+            localStorage.setItem(LS_API, b);
+          } catch (_) {}
         }
       }
     } catch (_) {
@@ -220,9 +227,11 @@ const TungAuth = (() => {
       );
     }
     setHint("Đang xác thực Google với server...");
+    const headers = { "Content-Type": "application/json" };
+    if (/ngrok/i.test(base)) headers["ngrok-skip-browser-warning"] = "true";
     const r = await fetch(base + "/api/auth/google", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: headers,
       body: JSON.stringify({ credential: credential }),
     });
     const data = await parseJsonResponse(r);

@@ -1,9 +1,9 @@
 {
   "appName": "TungDevAI",
   "publicSite": "https://jarvisai-tung.github.io",
-  "apiBase": "",
+  "apiBase": "https://reoccupy-alabaster-tantrum.ngrok-free.dev",
   "google_client_id": "932807715948-fvssk3ukqn636tdbuv1n59kvcoa5lhaf.apps.googleusercontent.com",
   "telegramBot": "https://t.me/grokapiai_bot",
-  "sameOrigin": true,
-  "note": "google_client_id public (OK). apiBase rong = same-origin khi mo qua tunnel/VPS. Khong de trycloudflare chet o day."
+  "sameOrigin": false,
+  "note": "apiBase = ngrok/tunnel VPS dang chay. May nha phai giu web+ngrok. Doi tunnel thi sua apiBase + Google Console."
 }
