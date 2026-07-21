@@ -192,12 +192,40 @@ const TungAuth = (() => {
     if (hint) hint.textContent = msg || "";
   }
 
+  /** Headers for API calls — ngrok free blocks without skip header */
+  function apiHeaders(extra) {
+    const h = Object.assign(
+      {
+        "ngrok-skip-browser-warning": "true",
+        "Cache-Control": "no-store",
+      },
+      extra || {}
+    );
+    return h;
+  }
+
+  async function apiFetch(path, opts) {
+    const base = apiBase();
+    if (!base) throw new Error("Chưa có server API (mở link tunnel, không chỉ github.io).");
+    const o = opts || {};
+    const headers = apiHeaders(o.headers || {});
+    return fetch(base + path, Object.assign({}, o, { headers: headers }));
+  }
+
   async function parseJsonResponse(r) {
     const text = await r.text();
     let data;
     try {
       data = JSON.parse(text);
     } catch {
+      // ngrok interstitial HTML often mistaken for API body
+      if (/ngrok|Visit Site|ERR_NGROK/i.test(text || "")) {
+        throw new Error(
+          "Ngrok chặn trình duyệt (Visit Site). Mở lại " +
+            apiBase() +
+            "/login.html → bấm Visit Site → rồi đăng nhập Google."
+        );
+      }
       data = { detail: text };
     }
     if (!r.ok) {
@@ -220,18 +248,10 @@ const TungAuth = (() => {
 
   async function exchangeGoogleCredential(credential) {
     if (!credential) throw new Error("Thiếu credential Google");
-    const base = apiBase();
-    if (!base) {
-      throw new Error(
-        "Chưa có server API. Mở đúng link tunnel/VPS (không mở github.io một mình)."
-      );
-    }
     setHint("Đang xác thực Google với server...");
-    const headers = { "Content-Type": "application/json" };
-    if (/ngrok/i.test(base)) headers["ngrok-skip-browser-warning"] = "true";
-    const r = await fetch(base + "/api/auth/google", {
+    const r = await apiFetch("/api/auth/google", {
       method: "POST",
-      headers: headers,
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ credential: credential }),
     });
     const data = await parseJsonResponse(r);
@@ -378,35 +398,10 @@ const TungAuth = (() => {
     const clientId = googleClientId();
     serverConfig.google_client_id = clientId;
 
-    // Mobile: nút OAuth redirect (GIS hay lỗi 400 / FedCM)
-    if (isMobileUa()) {
-      makeGoogleFallbackButton(wrap);
-      // Vẫn init GIS nếu có (phòng desktop-mode)
-      tryInitGis(clientId, null);
-      return;
-    }
-
-    if (typeof google === "undefined" || !google.accounts || !google.accounts.id) {
-      makeGoogleFallbackButton(wrap);
-      setTimeout(renderGoogleButton, 400);
-      return;
-    }
-
-    try {
-      tryInitGis(clientId, handleGoogleCredential);
-      wrap.innerHTML = "";
-      google.accounts.id.renderButton(wrap, {
-        theme: "outline",
-        size: "large",
-        shape: "pill",
-        text: "continue_with",
-        width: 320,
-        logo_alignment: "left",
-      });
-    } catch (e) {
-      console.warn("GIS render failed", e);
-      makeGoogleFallbackButton(wrap);
-    }
+    // Luôn dùng OAuth full-page redirect (ổn định mobile + ngrok + github redirect).
+    // GIS popup hay lỗi origin/FedCM trên điện thoại.
+    makeGoogleFallbackButton(wrap);
+    tryInitGis(clientId, handleGoogleCredential);
   }
 
   function tryInitGis(clientId, callback) {
@@ -443,7 +438,7 @@ const TungAuth = (() => {
     }
     try {
       setHint("Đang đăng nhập...");
-      const r = await fetch(apiBase() + "/api/auth/login", {
+      const r = await apiFetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
@@ -467,7 +462,7 @@ const TungAuth = (() => {
     }
     if (btn) btn.disabled = true;
     try {
-      const r = await fetch(apiBase() + "/api/auth/send-code", {
+      const r = await apiFetch("/api/auth/send-code", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, purpose: "register" }),
@@ -544,7 +539,7 @@ const TungAuth = (() => {
     }
     try {
       setHint("Đang tạo tài khoản...");
-      const r = await fetch(apiBase() + "/api/auth/register", {
+      const r = await apiFetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password, code, name }),
@@ -562,7 +557,7 @@ const TungAuth = (() => {
     const session = (localStorage.getItem(LS_GOOGLE) || "").trim();
     if (!session) return false;
     try {
-      const r = await fetch(apiBase() + "/api/auth/me", {
+      const r = await apiFetch("/api/auth/me", {
         headers: { "X-User-Session": session },
         cache: "no-store",
       });
@@ -606,17 +601,19 @@ const TungAuth = (() => {
     }
 
     try {
-      const r = await fetch(base + "/api/config", { cache: "no-store" });
+      const r = await apiFetch("/api/config", { cache: "no-store" });
       if (r.ok) {
         const cfg = await r.json();
         serverConfig = Object.assign(serverConfig, cfg);
         if (!(serverConfig.google_client_id || "").trim()) {
           serverConfig.google_client_id = googleClientId();
         }
+        setHint("Server online · sẵn sàng đăng nhập Google");
       }
-      // Loi API: im lang, khong hien card / doan text dai
     } catch (_) {
-      /* silent — UI sach, Google van hien */
+      setHint(
+        "Server đang tắt hoặc tunnel lỗi. Trên PC chạy BAT_TUNGDEVAI_ONLINE.bat rồi tải lại."
+      );
     }
     removeApiBaseFixer();
   }

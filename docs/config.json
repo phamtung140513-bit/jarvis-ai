@@ -1,10 +1,10 @@
 {
-    "sameOrigin":  false,
-    "apiBase":  "https://reoccupy-alabaster-tantrum.ngrok-free.dev",
-    "appName":  "TungDevAI",
-    "publicSite":  "https://jarvisai-tung.github.io",
-    "telegramBot":  "https://t.me/grokapiai_bot",
-    "google_client_id":  "932807715948-fvssk3ukqn636tdbuv1n59kvcoa5lhaf.apps.googleusercontent.com",
-    "liveApp":  "https://reoccupy-alabaster-tantrum.ngrok-free.dev",
-    "note":  "github.io auto-redirects app pages to apiBase. Keep PC web+ngrok running."
+    "sameOrigin": false,
+    "apiBase": "https://reoccupy-alabaster-tantrum.ngrok-free.dev",
+    "appName": "TungDevAI",
+    "publicSite": "https://jarvisai-tung.github.io",
+    "telegramBot": "https://t.me/grokapiai_bot",
+    "google_client_id": "932807715948-fvssk3ukqn636tdbuv1n59kvcoa5lhaf.apps.googleusercontent.com",
+    "liveApp": "https://reoccupy-alabaster-tantrum.ngrok-free.dev",
+    "note": "github.io redirects login/chat to apiBase (ngrok). Keep PC web+ngrok running. Google Console must include this apiBase origin + /google-callback.html"
 }
